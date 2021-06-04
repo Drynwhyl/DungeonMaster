@@ -14,7 +14,8 @@ WM("DungeonGenerator", function(import, export, exportDefault)
 
     local RANDOM_VARIATION = -1
     local ROOM_PLACEMENT_ATTEMPS = 10
-    local MIN_CORIDOR_WIDTH = 5
+    local MIN_CORIDOR_WIDTH = 4
+    local ROOM_NUMBER = 5
 
     local roomTemplateRects = {
         gg_rct_Region_000,
@@ -22,7 +23,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     }
     
     local rooms = {}
-    local map = GetPlayableMapRect()
+    local map = gg_rct_Dungeon --GetPlayableMapRect()
 
     local function parseRoomTemplates()
         for _, rect in ipairs(roomTemplateRects) do
@@ -31,25 +32,24 @@ WM("DungeonGenerator", function(import, export, exportDefault)
             local minX = GetRectMinX(rect)
             local minY = GetRectMinY(rect)
             room = { width = width, height = height, cells = CreateAutotable(2) }
-            for i = 1, width do
-                for j = 1, height do
-                    room.cells[i][j] = GetTerrainType(minX + (i - 1) * bj_CELLWIDTH, minY + (j - 1) * bj_CELLWIDTH);
-                    SetTerrainType(minX + (i - 1) * bj_CELLWIDTH, minY + (j - 1) * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
+            for i = 0, width do
+                for j = 0, height do
+                    room.cells[i][j] = GetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH);
+                    if (room.cells[i][j] == TILE_EMPTY) then
+                        print("EMPTY!")
+                    end
+                    SetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
                 end
             end
             table.insert(rooms, room)
         end 
     end
 
-    local function allNearestCellsHavePathing(x, y, size, ...)
-        local pathings = table.pack(...)
-        local pathingSet = {}
-        for _, value in pairs(pathings) do
-            pathingSet[value] = true
-        end
-        for i = x - size, x + size - 1 do
-            for j = y - size, y + size - 1 do
-                if (pathingSet[GetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH)] == nil) then
+    local function allNearestCellsIsEmpty(x, y, size)
+        local halfsize = size / 2
+        for i = x - halfsize, x + halfsize - 1 do
+            for j = y - halfsize, y + halfsize - 1 do
+                if (GetTerrainType(i * bj_CELLWIDTH, j * bj_CELLWIDTH) ~= TILE_EMPTY) then
                     return false
                 end
             end
@@ -58,9 +58,9 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     end
 
     local function isRoomPlaceable(room, x, y)
-        for i = 1, room.width do
-            for j = 1, room.height do
-                if (not allNearestCellsHavePathing(x + i, y + j, MIN_CORIDOR_WIDTH, TILE_EMPTY)) then
+        for i = 0, room.width do
+            for j = 0, room.height do
+                if (not allNearestCellsIsEmpty(x + i, y + j, MIN_CORIDOR_WIDTH)) then
                     return false
                 end
             end
@@ -69,9 +69,9 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     end
 
     local function placeRoom(room, x, y)
-        for i = 1, room.width do
-            for j = 1, room.height do
-                SetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH, room.cells[i][j], RANDOM_VARIATION,  1, SHAPE_CIRCLE)
+        for i = 0, room.width do
+            for j = 0, room.height do
+                SetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH, room.cells[i][j], RANDOM_VARIATION,  1, SHAPE_SQUARE)
             end
         end
     end
@@ -79,13 +79,18 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local function placeRandomRoom(room)
         local mapWidth = GetRectWidthBJ(map) / bj_CELLWIDTH
         local mapHeight = GetRectHeightBJ(map) / bj_CELLWIDTH
+        local mapMinX = GetRectMinX(map) / bj_CELLWIDTH
+        local mapMinY = GetRectMinY(map) / bj_CELLWIDTH
+        local mapMaxX = GetRectMaxX(map) / bj_CELLWIDTH
+        local mapMaxY = GetRectMaxY(map) / bj_CELLWIDTH
         for i = 1, ROOM_PLACEMENT_ATTEMPS do
-            local x = GetRandomInt(0, mapWidth - room.width)
-            local y = GetRandomInt(0, mapWidth - room.height)
+            local x = GetRandomInt(mapMinX + 1, mapMaxX - room.width - 1)   -- Add 1 extra cell to avoid placing rooms at edges of map
+            local y = GetRandomInt(mapMinY + 1, mapMaxY - room.height - 1)
+            print(string.format("map: %d %d room: %d %d x: %d y: %d", mapWidth, mapHeight, room.width, room.height, x, y))
             if (isRoomPlaceable(room, x, y)) then
                 placeRoom(room, x, y)
-                return true
                 print("place room sucess, attemps: " .. i)
+                return true
             end
         end
         print("place room failed ")
@@ -94,7 +99,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
 
     local function placeRooms()
         local placedRooms = {}
-        for i = 1, 4 do
+        for i = 1, ROOM_NUMBER do
             local room = rooms[GetRandomInt(1, #rooms)]
             local success = placeRandomRoom(room)
             if (success) then
@@ -109,6 +114,15 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         print("on game start running")
         Utils.pcall(function()
             
+            -- for i = GetRectMinX(map), GetRectMaxX(map) do
+            --     SetTerrainType(i, GetRectMinY(map), TILE_ICECROWN_SNOW, -1, 1, SHAPE_CIRCLE)
+            --     SetTerrainType(i, GetRectMaxY(map), TILE_ICECROWN_SNOW, -1, 1, SHAPE_CIRCLE)
+            -- end
+            -- for i = GetRectMinY(map), GetRectMaxY(map) do
+            --     SetTerrainType(GetRectMinX(map), i, TILE_ICECROWN_SNOW, -1, 1, SHAPE_CIRCLE)
+            --     SetTerrainType(GetRectMaxX(map), i, TILE_ICECROWN_SNOW, -1, 1, SHAPE_CIRCLE)
+            -- end
+
             CameraSetupApplyForceDuration(gg_cam_Camera_001, true, 3.0)
             print("invoke generation")
             parseRoomTemplates()
