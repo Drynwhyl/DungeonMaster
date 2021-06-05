@@ -3,14 +3,15 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     print("lib loaded")
     local Utils = import "Utils"
     local CreateAutotable = import "CreateAutotable"
+    local FindPath = import "FindPath"
 
     local TILE_EMPTY = TILE_ICECROWN_DIRT
     local TILE_FLOOR = TILE_ICECROWN_RUNE_BRICKS
     local TILE_WALL = TILE_ICECROWN_BLACK_SQUARES
     local TILE_DOOR = TILE_ICECROWN_TILED_BRICKS
     
-    local SHAPE_SQUARE = 0
-    local SHAPE_CIRCLE = 1
+    local SHAPE_CIRCLE = 0
+    local SHAPE_SQUARE = 1
 
     local RANDOM_VARIATION = -1
     local ROOM_PLACEMENT_ATTEMPS = 10
@@ -168,7 +169,7 @@ local roomCount = 0
         
         roomCount = roomCount + 1
 
-        return doorCellsArray
+        return { horizontal = horizontal, cells = doorCellsArray, width = horizontal and #cells or 1, height = horizontal and 1 or #cells }
     end
 
     local function tableLength(table)
@@ -201,7 +202,7 @@ local roomCount = 0
                 --print("i " .. i .. " j " .. j .. " cells " .. room[i][j])
                 if GetTerrainType(room.cells[i][j].x, room.cells[i][j].y) == TILE_DOOR and visited[room.cells[i][j].x][room.cells[i][j].y] ~= true then
                     print("start coords", room.cells[i][j].x, room.cells[i][j].y)
-                    local door = { cells = getDoorCells(room, i, j) }
+                    local door = getDoorCells(room, i, j)
                     table.insert(doors, door)
                     for k = 0, tableLength(door.cells) - 1 do
                         for v = 0, tableLength(door.cells[0]) - 1 do
@@ -226,7 +227,8 @@ local roomCount = 0
                     
                     local start = startDoors[GetRandomInt(1, #startDoors)]
                     local finish = finishRooms[GetRandomInt(1, #finishRooms)]
-                    --findPath(start, finish)
+                    FindPath(map, start, finish)
+                    return
                 end
             end
         end
