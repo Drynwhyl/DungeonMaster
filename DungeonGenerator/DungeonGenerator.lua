@@ -1,9 +1,8 @@
 WM("DungeonGenerator", function(import, export, exportDefault)
 
-    print("lib loaded")
     local Utils = import "Utils"
     local CreateAutotable = import "CreateAutotable"
-    local FindPath = import "FindPath"
+    local ConnectRooms = import "ConnectRooms"
 
     local TILE_EMPTY = TILE_ICECROWN_DIRT
     local TILE_FLOOR = TILE_ICECROWN_RUNE_BRICKS
@@ -109,143 +108,18 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         end
     end
 
-local roomCount = 0
-
-    local function getDoorCells(room, x, y)
-        local cells = {}
-        table.insert(cells, { x = room.cells[x][y].x, y = room.cells[x][y].y })
-
-        local dirX = 0
-        local dirY = 0
-        local horizontal
-
-        if x + 1 <= room.width and GetTerrainType(room.cells[x + 1][y].x, room.cells[x + 1][y].y) == TILE_DOOR then
-            dirX = 1
-            horizontal = true
-        elseif x - 1 >= 0 and GetTerrainType(room.cells[x - 1][y].x, room.cells[x - 1][y].y) == TILE_DOOR then
-            dirX = -1
-            horizontal = true
-        elseif y + 1 <= room.height and GetTerrainType(room.cells[x][y + 1].x, room.cells[x][y + 1].y) == TILE_DOOR then
-            dirY = 1
-            horizontal = false
-        elseif y - 1 >= 0 and GetTerrainType(room.cells[x][y - 1].x, room.cells[x][y - 1].y) == TILE_DOOR then
-            dirY = -1
-            horizontal = false
-        else
-            print("ERROR single cell room!!!")
-            CreateDestructable(FourCC("LTcr"), room.cells[x][y].x, room.cells[x][y].y, 0, 1, -1)
-            dirX = 1
-            horizontal = false
-        end
-
-        local i = x
-        local j = y
-        repeat
-            i = i + dirX
-            j = j + dirY
-            if i > room.width or i < 0 or j > room.height or j < 0 or  GetTerrainType(room.cells[i][j].x, room.cells[i][j].y) ~= TILE_DOOR then
-                break
-            end
-            if dirX < 0 or dirY > 0 then
-                table.insert(cells, 1, { x = room.cells[i][j].x, y = room.cells[i][j].y })
-            else
-                table.insert(cells, {  x = room.cells[i][j].x, y = room.cells[i][j].y })
-            end
-        until false
-
-        print("cell # in door " .. #cells)
-
-        local doorCellsArray = CreateAutotable()
-        if horizontal then
-            for index, cell in ipairs(cells) do
-                doorCellsArray[index - 1][0] = cell
-            end
-        else
-            for index, cell in ipairs(cells) do
-                doorCellsArray[0][index - 1] = cell
-            end
-        end
-
-        
-        roomCount = roomCount + 1
-
-        return { horizontal = horizontal, cells = doorCellsArray, width = horizontal and #cells or 1, height = horizontal and 1 or #cells }
-    end
-
-    local function tableLength(table)
-        local i = 0
-        for _ in pairs(table) do
-            i = i + 1
-        end
-        return i
-    end
-
-    local function printTableElements(myTable)
-        for key, value in pairs(myTable) do
-            print(key, value)
-        end
-    end
-
-    local function tableContains(myTable, x, y)
-        for key, value in pairs(myTable) do
-            if (value.x == x and value.y == y) then
-                return true
-            end
-        end
-    end
-
-    local function getRoomDoors(room)
-        local visited = CreateAutotable(1)
-        local doors = {}
-        for i = 0, room.width do
-            for j = 0, room.height do
-                --print("i " .. i .. " j " .. j .. " cells " .. room[i][j])
-                if GetTerrainType(room.cells[i][j].x, room.cells[i][j].y) == TILE_DOOR and visited[room.cells[i][j].x][room.cells[i][j].y] ~= true then
-                    print("start coords", room.cells[i][j].x, room.cells[i][j].y)
-                    local door = getDoorCells(room, i, j)
-                    table.insert(doors, door)
-                    for k = 0, tableLength(door.cells) - 1 do
-                        for v = 0, tableLength(door.cells[0]) - 1 do
-                            print("checking i " .. k .. " j " .. v .. " x " .. door.cells[k][v].x .. " y " .. door.cells[k][v].y)
-                            visited[door.cells[k][v].x][door.cells[k][v].y] = true
-                        end
-                    end
-                end
-            end
-        end
-        return doors
-    end
-
-    local function connectRooms()
-        local connectedRooms = {}
-        for _, room in pairs(rooms) do
-            for _, otherRoom in pairs(rooms) do
-                roomCount = 0
-                if (room ~= otherRoom and connectedRooms[room] ~= otherRoom and connectedRooms[otherRoom] ~= room) then
-                    local startDoors = getRoomDoors(room)
-                    local finishRooms = getRoomDoors(otherRoom)
-                    
-                    local start = startDoors[GetRandomInt(1, #startDoors)]
-                    local finish = finishRooms[GetRandomInt(1, #finishRooms)]
-                    FindPath(map, start, finish)
-                    return
-                end
-            end
-        end
-    end
-
-    print("on game start")
-    Utils.onGameStart(function()
-        print("on game start running")
-        Utils.pcall(function()
-            CameraSetupApplyForceDuration(gg_cam_Camera_001, true, 3.0)
-            print("invoke generation")
-            parseRoomTemplates()
-            print("rooms read")
-            placeRooms()
-            print("rooms placed")
-            connectRooms()
-        end)()
-    end)
+    Utils.onGameStart(Utils.pcall(function()
+        CameraSetupApplyForceDuration(gg_cam_Camera_001, true, 3.0)
+        print("invoke generation")
+        parseRoomTemplates()
+        print("rooms read")
+        placeRooms()
+        print("rooms placed")
+        local trigger = CreateTrigger()
+        TriggerAddAction(trigger, function()
+            ConnectRooms(rooms, map)
+        end)
+        TriggerExecute(trigger)
+    end))
 
 end)

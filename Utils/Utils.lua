@@ -23,6 +23,14 @@ WM("Utils", function(import, export, exportDefault)
         end)  
     end
 
+    function Utils.tableLength(table)
+        local i = 0
+        for _ in pairs(table) do
+            i = i + 1
+        end
+        return i
+    end
+
     function Utils.tableGetRandom(myTable)
         local keys = {}
         for key, _ in pairs(myTable) do
@@ -61,6 +69,8 @@ WM("Utils", function(import, export, exportDefault)
         end
         return list
     end
+
+    
 
     exportDefault(Utils)
 end)
