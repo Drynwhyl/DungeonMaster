@@ -6,12 +6,6 @@ WM("ConnectRooms", function(import, export, exportDefault)
 
     local map
 
-    local TILE_EMPTY = TILE_ICECROWN_DIRT
-    local TILE_FLOOR = TILE_ICECROWN_RUNE_BRICKS
-    local TILE_WALL = TILE_ICECROWN_BLACK_SQUARES
-    local TILE_DOOR = TILE_ICECROWN_TILED_BRICKS
-    local TILE_HALLWAY = TILE_ICECROWN_BLACK_BRICKS
-
     local function rectContainsPathing(rect, ...)
         local pathings = {}
         for _, value in ipairs(table.pack(...)) do
@@ -172,7 +166,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
             end
 
             for _, next in pairs(current.neighbours) do
-                if (counter % 100 == 0) then
+                if (counter % 1000 == 0) then
                     TriggerSleepAction(0)
                     print("node processed: ", counter)
                 end
@@ -209,7 +203,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
                 -- end
 
                 if next.hallway == true then
-                    moveCost = moveCost - 3
+                    moveCost = 0
                 end
 
                 local newCost = costSoFar[current] + moveCost
@@ -228,13 +222,26 @@ WM("ConnectRooms", function(import, export, exportDefault)
         if found then 
             local current = goal;
             local path = { current }
-            while current ~= start do
+            while true do
+                if current == cameFrom[current] then
+                    break
+                end
                 current = cameFrom[current]
                 current.hallway = true
                 table.insert(path, current)
                 SetTerrainType(GetRectCenterX(current.rect), GetRectCenterY(current.rect), TILE_HALLWAY, -1, 3, 1)
+                -- for i = GetRectMinX(current.rect), GetRectMaxX(current.rect), bj_CELLWIDTH do
+                --     SetTerrainType(i, GetRectMinY(current.rect), TILE_WALL, -1, 1, 1)
+                --     SetTerrainType(i, GetRectMaxY(current.rect), TILE_WALL, -1, 1, 1)
+                -- end
+                -- for i = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
+                --     SetTerrainType(GetRectMinX(current.rect), i, TILE_WALL, -1, 1, 1)
+                --     SetTerrainType(GetRectMaxX(current.rect), i, TILE_WALL, -1, 1, 1)
+                -- end
             end
         end
+
+        return found
     end
 
     local roomCount = 0
@@ -332,14 +339,20 @@ WM("ConnectRooms", function(import, export, exportDefault)
                     
                     local start = startDoors[GetRandomInt(1, #startDoors)]
                     local finish = finishRooms[GetRandomInt(1, #finishRooms)]
-                    findPath(nodes, map, start, finish)
-                    connectedRooms[room] = otherRoom
-                    connectedRooms[otherRoom] = room
+                    local connected = findPath(nodes, map, start, finish)
+                    if connected then
+                        connectedRooms[room] = otherRoom
+                        connectedRooms[otherRoom] = room
+                        if GetRandomInt(1, 2) == 1 then
+                            break
+                        end
+                    end
                     roomCount = roomCount + 1
                     print("room count", roomCount)
                 end
             end
         end
+
     end
 
     exportDefault(ConnectRooms)

@@ -3,11 +3,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local Utils = import "Utils"
     local CreateAutotable = import "CreateAutotable"
     local ConnectRooms = import "ConnectRooms"
-
-    local TILE_EMPTY = TILE_ICECROWN_DIRT
-    local TILE_FLOOR = TILE_ICECROWN_RUNE_BRICKS
-    local TILE_WALL = TILE_ICECROWN_BLACK_SQUARES
-    local TILE_DOOR = TILE_ICECROWN_TILED_BRICKS
+    local CreateWalls = import "CreateWalls"
     
     local SHAPE_CIRCLE = 0
     local SHAPE_SQUARE = 1
@@ -15,7 +11,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local RANDOM_VARIATION = -1
     local ROOM_PLACEMENT_ATTEMPS = 10
     local MIN_CORIDOR_WIDTH = 4
-    local ROOM_NUMBER = 5
+    local ROOM_NUMBER = 10
 
     local roomTemplateRects = {
         gg_rct_Region_000,
@@ -116,9 +112,10 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         placeRooms()
         print("rooms placed")
         local trigger = CreateTrigger()
-        TriggerAddAction(trigger, function()
+        TriggerAddAction(trigger, Utils.pcall(function()
             ConnectRooms(rooms, map)
-        end)
+            CreateWalls(map)
+        end))
         TriggerExecute(trigger)
     end))
 
