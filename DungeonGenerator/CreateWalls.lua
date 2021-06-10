@@ -36,16 +36,32 @@ WM("CreateWalls", function(import, export, exportDefault)
     end
 
     local function isHallwayCellOnEdge(point)
+
         local up = GetTerrainType(point.x, point.y + bj_CELLWIDTH)
         local down = GetTerrainType(point.x, point.y - bj_CELLWIDTH)
         local left = GetTerrainType(point.x - bj_CELLWIDTH, point.y)
         local right = GetTerrainType(point.x + bj_CELLWIDTH, point.y)
+
         local down_left = GetTerrainType(point.x - bj_CELLWIDTH, point.y - bj_CELLWIDTH)
         local up_left = GetTerrainType(point.x - bj_CELLWIDTH, point.y + bj_CELLWIDTH)
         local down_right = GetTerrainType(point.x + bj_CELLWIDTH, point.y - bj_CELLWIDTH)
         local up_right = GetTerrainType(point.x + bj_CELLWIDTH, point.y + bj_CELLWIDTH)
-        return up == TILE_EMPTY or down == TILE_EMPTY or left == TILE_EMPTY or right == TILE_EMPTY
-                or down_left == TILE_EMPTY or up_left == TILE_EMPTY or down_right == TILE_EMPTY or up_right == TILE_EMPTY
+
+        local diagonal = 0
+        if down_left == TILE_EMPTY then
+            diagonal = diagonal + 1
+        end
+        if up_left == TILE_EMPTY then
+            diagonal = diagonal + 1
+        end
+        if down_right == TILE_EMPTY then
+            diagonal = diagonal + 1
+        end
+        if up_right == TILE_EMPTY then
+            diagonal = diagonal + 1
+        end
+
+        return up == TILE_EMPTY or down == TILE_EMPTY or left == TILE_EMPTY or right == TILE_EMPTY-- or diagonal == 1
     end
 
     local function getNextCell(direction, current)
@@ -74,30 +90,6 @@ WM("CreateWalls", function(import, export, exportDefault)
             return next
         end
         return nil
-    end
-
-    local function rotate(source, angle, objectList)
-        local resultList = {}
-        local sourceLoc = Location(source.x, source.y)
-        local objectLoc = Location(0, 0)
-        for _, object in ipairs(objectList) do
-            MoveLocation(objectLoc, object.x, object.y)
-            local dist = DistanceBetweenPoints(sourceLoc, objectLoc)
-            local currentAngle = AngleBetweenPoints(sourceLoc, objectLoc)
-            local newLoc = PolarProjectionBJ(sourceLoc, dist, currentAngle + angle)
-            table.insert(resultList, { id = object.id, x = GetLocationX(newLoc), y = GetLocationY(newLoc), angle = object.angle + angle })
-            RemoveLocation(newLoc)
-        end
-        RemoveLocation(objectLoc)
-        RemoveLocation(sourceLoc)
-        return resultList
-    end
-
-    local function createWallWithRotation(current, rotation, base)
-        local rotated = rotate(current, rotation, base)
-        for _, object in ipairs(rotated) do
-            CreateDestructableZ(object.id, object.x, object.y, WALL_Z, object.angle, 1.0, -1)
-        end
     end
 
     local function placeWall(current, visitedWalls)
@@ -159,20 +151,16 @@ WM("CreateWalls", function(import, export, exportDefault)
         local cellDownRight = WALLS[cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]]
 
         if not visitedWalls[current.x - bj_CELLWIDTH][current.y] then
-            CreateDestructableZ(cellUpLeft, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-            visitedWalls[current.x - bj_CELLWIDTH][current.y] = true
+            visitedWalls[current.x - bj_CELLWIDTH][current.y] = CreateDestructableZ(cellUpLeft, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
         end
         if not visitedWalls[current.x - bj_CELLWIDTH][current.y - bj_CELLWIDTH] then
-            CreateDestructableZ(cellDownLeft, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-            visitedWalls[current.x - bj_CELLWIDTH][current.y - bj_CELLWIDTH] = true
+            visitedWalls[current.x - bj_CELLWIDTH][current.y - bj_CELLWIDTH] = CreateDestructableZ(cellDownLeft, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
         end
         if not visitedWalls[current.x][current.y] then
-            CreateDestructableZ(cellUpRight, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-            visitedWalls[current.x][current.y] = true
+            visitedWalls[current.x][current.y] = CreateDestructableZ(cellUpRight, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
         end
         if not visitedWalls[current.x][current.y - bj_CELLWIDTH] then
-            CreateDestructableZ(cellDownRight, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-            visitedWalls[current.x][current.y - bj_CELLWIDTH] = true
+            visitedWalls[current.x][current.y - bj_CELLWIDTH] = CreateDestructableZ(cellDownRight, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
         end
     end
 
@@ -181,51 +169,85 @@ WM("CreateWalls", function(import, export, exportDefault)
         local prevMoveType
         local currentMoveType
         local nextMoveType
-        local prev
-        local current = findHallwayCell(map)
-        local next
+        local prevCell
+        local currCell = findHallwayCell(map)
+        local nextCell
         local visited = CreateAutotable(1)
         local visitedWalls = CreateAutotable(1)
+        local visitedToRemove = CreateAutotable(1)
         local moveTypes = { "DOWN", "LEFT", "UP", "RIGHT", "DOWN_LEFT", "UP_LEFT", "UP_RIGHT", "DOWN_RIGHT" }
-        SetTerrainType(current.x, current.y, TILE_WALL, -1, 1, 1)
-        visited[current.x][current.y] = true
+        SetTerrainType(currCell.x, currCell.y, TILE_WALL, -1, 1, 1)
+        visited[currCell.x][currCell.y] = true
+        visitedToRemove[currCell.x][currCell.y] = { next = currCell, currCell = nil, prev = nil }
 
         while true do
-            counter = counter + 1
             if counter % 1 == 0 then
-                TriggerSleepAction(1)
+                TriggerSleepAction(visitedToRemove == nil and 1 or 0)
             end
 
             print("directions:")
             for _, direction in ipairs(moveTypes) do
-                next = checkDirection(direction, current, visited)
-                if next then
+                nextCell = checkDirection(direction, currCell, visited)
+                if nextCell then
                     nextMoveType = direction
                     break
                 end
             end
 
-            if next then
-                PanCameraToTimed(next.x, next.y, 0)
-                SetTerrainType(next.x, next.y, TILE_WALL, -1, 1, 1)
-                if prev ~= nil then
-                    placeWall(prev, visitedWalls)
+            if nextCell then
+                PanCameraToTimed(nextCell.x, nextCell.y, 0)
+                SetTerrainType(nextCell.x, nextCell.y, TILE_WALL, -1, 1, 1)
+                if prevCell ~= nil then
+                    if visitedToRemove == nil then
+                        if visitedWalls[prevCell.x][prevCell.y] then
+                            RemoveDestructable(visitedWalls[prevCell.x][prevCell.y])
+                            visitedWalls[prevCell.x][prevCell.y] = nil
+                        end
+                        if visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y] then
+                            RemoveDestructable(visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y])
+                            visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y] = nil
+                        end
+                        if visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH] then
+                            RemoveDestructable(visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH])
+                            visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH] = nil
+                        end
+                        if visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH] then
+                            RemoveDestructable(visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH])
+                            visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH] = nil
+                        end
+                    end
+                    placeWall(prevCell, visitedWalls)
                 end
-                visited[next.x][next.y] = true
+                if counter < 6 then
+                    visitedToRemove[nextCell.x][nextCell.y] = { next = nextCell, current = currCell, prev = prevCell }
+                end
+                visited[nextCell.x][nextCell.y] = true
 
-                prev = current
-                current = next
+                prevCell = currCell
+                currCell = nextCell
                 prevMoveType = currentMoveType
                 currentMoveType = nextMoveType
+            elseif visitedToRemove ~= nil then
+                for x, list in pairs(visitedToRemove) do
+                    for y, val in pairs(list) do
+                        if val.next ~= nil then
+                            visited[val.next.x][val.next.y] = nil
+                        end
+                    end
+                end
+                TriggerSleepAction(5)
+                visitedToRemove = nil
             else
-                CreateDestructable(FourCC("OTtw"), current.x, current.y, 0, 1, -1)
-                PanCameraTo(current.x, current.y)
+                CreateDestructable(FourCC("OTtw"), currCell.x, currCell.y, 0, 1, -1)
+                PanCameraTo(currCell.x, currCell.y)
                 print("ERROR: next cell not found!")
-                local nextCell = getNextCell("UP", current)
-                print("current", current.x, current.y, "next", nextCell.x, nextCell.y)
+                local nextCell = getNextCell("UP", currCell)
+                print("current", currCell.x, currCell.y, "next", nextCell.x, nextCell.y)
                 print(GetTerrainType(nextCell.x, nextCell.y) ~= TILE_EMPTY, visited[nextCell.x][nextCell.y] ~= true, isHallwayCellOnEdge(nextCell))
                 break
             end
+
+            counter = counter + 1
         end
     end
 
