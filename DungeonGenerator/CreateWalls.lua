@@ -56,42 +56,60 @@ WM("CreateWalls", function(import, export, exportDefault)
         return nil
     end
 
+    local function rotate(source, angle, objectList)
+        local resultList = {}
+        local sourceLoc = Location(source.x, source.y)
+        local objectLoc = Location(0, 0)
+        for _, object in ipairs(objectList) do
+            MoveLocation(objectLoc, object.x, object.y)
+            local dist = DistanceBetweenPoints(sourceLoc, objectLoc)
+            local currentAngle = AngleBetweenPoints(sourceLoc, objectLoc)
+            local newLoc = PolarProjectionBJ(sourceLoc, dist, currentAngle + angle)
+            table.insert(resultList, { id = object.id, x = GetLocationX(newLoc), y = GetLocationY(newLoc), angle = object.angle + angle})
+            RemoveLocation(newLoc)
+        end
+        RemoveLocation(objectLoc)
+        RemoveLocation(sourceLoc)
+        return resultList
+    end
+
+    local function createWallWithRotation(current, rotation, base)
+        local rotated = rotate(current, rotation, base)
+        for _, object in ipairs(rotated) do
+            CreateDestructableZ(object.id, object.x, object.y, WALL_Z, object.angle, 1.0, -1)
+        end
+    end
+
     local function placeWall(prev, current, next, prevMoveType, currentMoveType, nextMoveType)
-        if currentMoveType == nextMoveType and currentMoveType == prevMoveType then
-            if currentMoveType == "UP" then
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 180.0, 1.0, -1)
-            elseif currentMoveType == "DOWN" then
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y + bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-            elseif currentMoveType == "RIGHT" then
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-            elseif currentMoveType == "LEFT" then
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
+        if currentMoveType == prevMoveType and prevMoveType ~= nextMoveType then
+            local base = {
+                { id = WALL_OUTER_CORNER_2,x = current.x, y = current.y, angle = 90.0 },
+                { id = WALL_INNER_CORNER_2,x = current.x, y = current.y + bj_CELLWIDTH, angle = 180.0 },
+                { id = WALL_STRAIGHT_2,x = current.x + bj_CELLWIDTH, y = current.y, angle = 90.0 },
+                { id = WALL_STRAIGHT_2,x = current.x, y = current.y, angle = 0.0 },
+            }
+            if currentMoveType == "LEFT" and nextMoveType == "UP" or currentMoveType == "DOWN" and nextMoveType == "RIGHT"  then
+                createWallWithRotation(current, 0, base)
+            elseif currentMoveType == "UP" and nextMoveType == "RIGHT" or currentMoveType == "LEFT" and nextMoveType == "DOWN" then
+                createWallWithRotation(current, 270, base)
+            elseif currentMoveType == "RIGHT" and nextMoveType == "DOWN" or currentMoveType == "UP" and nextMoveType == "LEFT"  then
+                createWallWithRotation(current, 180, base)
+            elseif currentMoveType == "DOWN" and nextMoveType == "LEFT" or currentMoveType == "RIGHT" and nextMoveType == "UP"  then
+                createWallWithRotation(current, 90, base)
             end
-        elseif currentMoveType == prevMoveType and prevMoveType ~= nextMoveType then
-            if currentMoveType == "LEFT" and nextMoveType == "UP" then
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_INNER_CORNER_2, current.x, current.y + bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-            elseif currentMoveType == "UP" and nextMoveType == "RIGHT" then
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_INNER_CORNER_2, current.x + bj_CELLWIDTH, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-            elseif currentMoveType == "RIGHT" and nextMoveType == "DOWN" then
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-                CreateDestructableZ(WALL_INNER_CORNER_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 180.0, 1.0, -1)
-            elseif currentMoveType == "DOWN" and nextMoveType == "LEFT" then
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 180.0, 1.0, -1)
-                CreateDestructableZ(WALL_INNER_CORNER_2, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y + bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
+        elseif currentMoveType == nextMoveType and currentMoveType == prevMoveType then
+            local base = {
+                { id = WALL_STRAIGHT_2,x = current.x, y = current.y, angle = 180.0 },
+                { id = WALL_STRAIGHT_2,x = current.x, y = current.y - bj_CELLWIDTH, angle = 0.0 },
+            }
+            if currentMoveType == "UP" then
+                createWallWithRotation(current, 0, base)
+            elseif currentMoveType == "DOWN" then
+                createWallWithRotation(current, 180, base)
+            elseif currentMoveType == "RIGHT" then
+                createWallWithRotation(current, 270, base)
+            elseif currentMoveType == "LEFT" then
+                createWallWithRotation(current, 90, base)
             end
         elseif true then
             if prevMoveType == "UP" and currentMoveType == "UP_LEFT" and nextMoveType == "LEFT" then
@@ -102,9 +120,7 @@ WM("CreateWalls", function(import, export, exportDefault)
 
                 CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
                 CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-                
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y - 2 * bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
+
             elseif prevMoveType == "UP" and currentMoveType == "UP_RIGHT" and nextMoveType == "RIGHT" then
                 CreateDestructableZ(WALL_DIAGONAL_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
 
