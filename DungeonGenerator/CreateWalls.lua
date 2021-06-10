@@ -7,6 +7,23 @@ WM("CreateWalls", function(import, export, exportDefault)
     local WALL_DIAGONAL_2 = FourCC("B00B")
     local WALL_Z = 60.0
 
+    local WALLS = {
+        aaac = FourCC("B001"),
+        aaca = FourCC("B005"),
+        aacc = FourCC("B007"),
+        acaa = FourCC("B002"),
+        acac = FourCC("B003"),
+        acca = FourCC("B004"),
+        accc = FourCC("B00A"),
+        caaa = FourCC("B006"),
+        caac = FourCC("B008"),
+        caca = FourCC("B00B"),
+        cacc = FourCC("B000"),
+        ccaa = FourCC("B009"),
+        ccac = FourCC("B00C"),
+        ccca = FourCC("B00D"),
+    }
+
     local function findHallwayCell(map)
         for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do  
             for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do 
@@ -80,82 +97,68 @@ WM("CreateWalls", function(import, export, exportDefault)
         end
     end
 
-    local function placeWall(prev, current, next, prevMoveType, currentMoveType, nextMoveType)
-        if currentMoveType == prevMoveType and prevMoveType ~= nextMoveType then
-            local base = {
-                { id = WALL_OUTER_CORNER_2,x = current.x, y = current.y, angle = 90.0 },
-                { id = WALL_INNER_CORNER_2,x = current.x, y = current.y + bj_CELLWIDTH, angle = 180.0 },
-                { id = WALL_STRAIGHT_2,x = current.x + bj_CELLWIDTH, y = current.y, angle = 90.0 },
-                { id = WALL_STRAIGHT_2,x = current.x, y = current.y, angle = 0.0 },
-            }
-            if currentMoveType == "LEFT" and nextMoveType == "UP" or currentMoveType == "DOWN" and nextMoveType == "RIGHT"  then
-                createWallWithRotation(current, 0, base)
-            elseif currentMoveType == "UP" and nextMoveType == "RIGHT" or currentMoveType == "LEFT" and nextMoveType == "DOWN" then
-                createWallWithRotation(current, 270, base)
-            elseif currentMoveType == "RIGHT" and nextMoveType == "DOWN" or currentMoveType == "UP" and nextMoveType == "LEFT"  then
-                createWallWithRotation(current, 180, base)
-            elseif currentMoveType == "DOWN" and nextMoveType == "LEFT" or currentMoveType == "RIGHT" and nextMoveType == "UP"  then
-                createWallWithRotation(current, 90, base)
-            end
-        elseif currentMoveType == nextMoveType and currentMoveType == prevMoveType then
-            local base = {
-                { id = WALL_STRAIGHT_2,x = current.x, y = current.y, angle = 180.0 },
-                { id = WALL_STRAIGHT_2,x = current.x, y = current.y - bj_CELLWIDTH, angle = 0.0 },
-            }
-            if currentMoveType == "UP" then
-                createWallWithRotation(current, 0, base)
-            elseif currentMoveType == "DOWN" then
-                createWallWithRotation(current, 180, base)
-            elseif currentMoveType == "RIGHT" then
-                createWallWithRotation(current, 270, base)
-            elseif currentMoveType == "LEFT" then
-                createWallWithRotation(current, 90, base)
-            end
-        elseif true then
-            if prevMoveType == "UP" and currentMoveType == "UP_LEFT" and nextMoveType == "LEFT" then
-                CreateDestructableZ(WALL_DIAGONAL_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+    local function placeWall(current)
+        local cliff = {
+            { "a", "a", "a", "a" },
+            { "a", "c", "c", "a" },
+            { "a", "c", "c", "a" },
+            { "a", "a", "a", "a" },
+        }
 
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-
-            elseif prevMoveType == "UP" and currentMoveType == "UP_RIGHT" and nextMoveType == "RIGHT" then
-                CreateDestructableZ(WALL_DIAGONAL_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y, WALL_Z, 90.0, 1.0, -1)
-                
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y - 2 * bj_CELLWIDTH, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-            elseif prevMoveType == "LEFT" and currentMoveType == "UP_LEFT" and nextMoveType == "UP" then
-                CreateDestructableZ(WALL_DIAGONAL_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_OUTER_CORNER_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 90.0, 1.0, -1)
-                
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y + bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-                
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + 2 * bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 90.0, 1.0, -1)
-                CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-            elseif prevMoveType == "DOWN" and currentMoveType == "DOWN_LEFT" and nextMoveType == "LEFT" then
-                -- CreateDestructableZ(WALL_DIAGONAL_2, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-
-                -- CreateDestructableZ(WALL_OUTER_CORNER_2, current.x, current.y, WALL_Z, 90.0, 1.0, -1)
-                -- CreateDestructableZ(WALL_OUTER_CORNER_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 90.0, 1.0, -1)
-                
-                -- CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y, WALL_Z, 0.0, 1.0, -1)
-                -- CreateDestructableZ(WALL_STRAIGHT_2, current.x, current.y + bj_CELLWIDTH, WALL_Z, 180.0, 1.0, -1)
-                
-                -- CreateDestructableZ(WALL_STRAIGHT_2, current.x + 2 * bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 90.0, 1.0, -1)
-                -- CreateDestructableZ(WALL_STRAIGHT_2, current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-            end
+        -- Check left
+                print("receive", current)
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y) == TILE_WALL then
+            cliff[2][1] = "c"
+            cliff[3][1] = "c"
         end
+        -- Check right
+        if GetTerrainType(current.x + bj_CELLWIDTH, current.y) == TILE_WALL then
+            cliff[2][4] = "c"
+            cliff[3][4] = "c"
+        end
+        -- Check up
+        if GetTerrainType(current.x, current.y + bj_CELLWIDTH) == TILE_WALL then
+            cliff[1][2] = "c"
+            cliff[1][3] = "c"
+        end
+        -- Check down
+        if GetTerrainType(current.x, current.y - bj_CELLWIDTH) == TILE_WALL then
+            cliff[4][2] = "c"
+            cliff[4][3] = "c"
+        end
+
+        -- Check down-left 
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+            cliff[4][1] = "c"
+        end
+        -- Check up-left 
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+            cliff[1][1] = "c"
+        end
+        -- Check up-right 
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+            cliff[1][4] = "c"
+        end
+        -- Check down-right 
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+            cliff[4][4] = "c"
+        end
+
+        print(
+            cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1],
+            cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1],
+            cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3],
+            cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]
+         )
+        local cellUpLeft = WALLS[cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1]]
+        local cellDownLeft = WALLS[cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]]
+        local cellUpRight = WALLS[cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]]
+        local cellDownRight = WALLS[cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]]
+
+        CreateDestructableZ(cellUpLeft, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
+        CreateDestructableZ(cellDownLeft, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+        CreateDestructableZ(cellUpRight, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
+        CreateDestructableZ(cellDownRight, current.x, current.y - bj_CELLWIDTH , WALL_Z, 270.0, 1.0, -1)
     end
 
     local counter = 0
@@ -171,8 +174,12 @@ WM("CreateWalls", function(import, export, exportDefault)
 
         while true do
             PanCameraToTimed(current.x, current.y, 0)
-            if GetTerrainType(current.x, current.y) == TILE_HALLWAY then
+            if current ~= nil and (GetTerrainType(current.x, current.y) == TILE_HALLWAY or true) then
                 SetTerrainType(current.x, current.y, TILE_WALL, -1, 1, 1)
+            end
+            if prev ~= nil then
+                print("pass current", prev)
+                placeWall(prev)
             end
             if counter % 4 == 0 then
                 TriggerSleepAction(0)
@@ -188,7 +195,7 @@ WM("CreateWalls", function(import, export, exportDefault)
                 end
             end
             if next then
-                placeWall(prev, current, next, prevMoveType, currentMoveType, nextMoveType)
+                --placeWall(prev, current, next, prevMoveType, currentMoveType, nextMoveType)
                 prev = current
                 current = next
                 prevMoveType = currentMoveType
