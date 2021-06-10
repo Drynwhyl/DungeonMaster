@@ -19,23 +19,23 @@ WM("TextTag", function(import, export, exportDefault)
     --          convert it to text and replace the whole trigger text with this one
     -- ==============================================================================
     --  for custom centered texttags
-    MEAN_CHAR_WIDTH = 5.5	---@type real	
-    MAX_TEXT_SHIFT = 200.0	---@type real	
-    DEFAULT_HEIGHT = 16.0	---@type real	
+    MEAN_CHAR_WIDTH = 5.5    ---@type number
+    MAX_TEXT_SHIFT = 200.0    ---@type number
+    DEFAULT_HEIGHT = 16.0    ---@type number
     --  for default texttags
-    SIGN_SHIFT = 16.0	---@type real	
-    FONT_SIZE = 0.024	---@type real	
-    MISS = "miss"	---@type string	
+    SIGN_SHIFT = 16.0    ---@type number
+    FONT_SIZE = 0.024    ---@type number
+    MISS = "miss"    ---@type string
     -- ===========================================================================
     --    Custom centered texttag on (x,y) position
     --    color is in default wc3 format, for example "|cFFFFCC00"
     -- ===========================================================================
 
-    ---@param x real
-    ---@param y real
+    ---@param x number
+    ---@param y number
     ---@param text string
     ---@param color string
-    ---@return nothing
+    ---@return void
     function TextTag.XY(x, y, text, red, green, blue, show)
         local tt = CreateTextTag()
         local shift = RMinBJ(StringLength(text) * MEAN_CHAR_WIDTH, MAX_TEXT_SHIFT)
@@ -56,7 +56,7 @@ WM("TextTag", function(import, export, exportDefault)
     ---@param whichUnit unit
     ---@param text string
     ---@param color string
-    ---@return nothing
+    ---@return void
     function TextTag.Unit(whichUnit, text, red, green, blue, show)
         local tt = CreateTextTag()
         local shift = RMinBJ(StringLength(text) * MEAN_CHAR_WIDTH, MAX_TEXT_SHIFT)
@@ -75,9 +75,9 @@ WM("TextTag", function(import, export, exportDefault)
     -- ===========================================================================
 
     ---@param whichUnit unit
-    ---@param bounty integer
+    ---@param bounty number
     ---@param killer player
-    ---@return nothing
+    ---@return void
     function TextTag.GoldBounty(whichUnit, bounty, show)
         local tt = CreateTextTag()
         local text = "+" .. I2S(bounty)
@@ -95,9 +95,9 @@ WM("TextTag", function(import, export, exportDefault)
     -- ==============================================================================
 
     ---@param whichUnit unit
-    ---@param bounty integer
+    ---@param bounty number
     ---@param killer player
-    ---@return nothing
+    ---@return void
     function TextTag.LumberBounty(whichUnit, bounty, killer)
         local tt = CreateTextTag()
         local text = "+" .. I2S(bounty)
@@ -115,8 +115,8 @@ WM("TextTag", function(import, export, exportDefault)
     -- ===========================================================================
 
     ---@param whichUnit unit
-    ---@param dmg integer
-    ---@return nothing
+    ---@param dmg number
+    ---@return void
     function TextTag.ManaBurn(whichUnit, dmg)
         local tt = CreateTextTag()
         local text = "-" .. I2S(dmg)
@@ -134,7 +134,7 @@ WM("TextTag", function(import, export, exportDefault)
     -- ===========================================================================
 
     ---@param whichUnit unit
-    ---@return nothing
+    ---@return void
     function TextTag.Miss(whichUnit)
         local tt = CreateTextTag()
         SetTextTagText(tt, MISS, FONT_SIZE)
@@ -150,8 +150,8 @@ WM("TextTag", function(import, export, exportDefault)
     -- ===========================================================================
 
     ---@param whichUnit unit
-    ---@param dmg integer
-    ---@return nothing
+    ---@param dmg number
+    ---@return void
     function TextTag.CriticalStrike(whichUnit, dmg)
         local tt = CreateTextTag()
         local text = I2S(dmg) .. "!"
@@ -169,9 +169,9 @@ WM("TextTag", function(import, export, exportDefault)
     -- ===========================================================================
 
     ---@param whichUnit unit
-    ---@param dmg integer
+    ---@param dmg number
     ---@param initialDamage boolean
-    ---@return nothing
+    ---@return void
     function TextTag.ShadowStrike(whichUnit, dmg, initialDamage)
         local tt = CreateTextTag()
         local text = I2S(dmg)
@@ -189,7 +189,6 @@ WM("TextTag", function(import, export, exportDefault)
         text = nil
         tt = nil
     end
-
 
     exportDefault(TextTag)
 end)

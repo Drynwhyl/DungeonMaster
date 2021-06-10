@@ -17,10 +17,10 @@ WM("Utils", function(import, export, exportDefault)
     end
 
     function Utils.doAfter(duration, callback)
-        TimerStart(CreateTimer(), duration, false, function ()
+        TimerStart(CreateTimer(), duration, false, function()
             Utils.pcall(callback)()
             DestroyTimer(GetExpiredTimer())
-        end)  
+        end)
     end
 
     function Utils.tableLength(table)
@@ -63,14 +63,14 @@ WM("Utils", function(import, export, exportDefault)
         func(group, ...)
         while true do
             local u = FirstOfGroup(group)
-            if u == nil then break end
+            if u == nil then
+                break
+            end
             table.insert(list, u)
             GroupRemoveUnit(group, u)
         end
         return list
     end
-
-    
 
     exportDefault(Utils)
 end)

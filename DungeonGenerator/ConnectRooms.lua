@@ -12,8 +12,8 @@ WM("ConnectRooms", function(import, export, exportDefault)
             pathings[value] = true
         end
         for i = GetRectMinX(rect), GetRectMaxX(rect), bj_CELLWIDTH do
-            for j = GetRectMinY(rect), GetRectMaxY(rect), bj_CELLWIDTH do 
-                if pathings[GetTerrainType(i, j)] == true then 
+            for j = GetRectMinY(rect), GetRectMaxY(rect), bj_CELLWIDTH do
+                if pathings[GetTerrainType(i, j)] == true then
                     return true
                 end
             end
@@ -54,10 +54,10 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local rect = Rect(x - firstPart, y - firstPart, x + secondPart, y + secondPart)
 
         if GetRectMinX(rect) < GetRectMinX(map)
-        or GetRectMaxX(rect) > GetRectMaxX(map)
-        or GetRectMinY(rect) < GetRectMinY(map)
-        or GetRectMaxY(rect) > GetRectMaxY(map) 
-        or rectContainsPathing(rect, TILE_WALL, TILE_FLOOR) then
+                or GetRectMaxX(rect) > GetRectMaxX(map)
+                or GetRectMinY(rect) < GetRectMinY(map)
+                or GetRectMaxY(rect) > GetRectMaxY(map)
+                or rectContainsPathing(rect, TILE_WALL, TILE_FLOOR) then
             RemoveRect(rect)
             return nil
         end
@@ -75,7 +75,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local nodeSize = 5;
         local nodes = CreateAutotable(1)
         for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
-            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do 
+            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do
                 local rect = getRectFromPoint(i, j, nodeSize)
                 if rect == nil then
                     nodes[i][j] = nil
@@ -85,19 +85,18 @@ WM("ConnectRooms", function(import, export, exportDefault)
             end
         end
 
-        
         for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
-            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do 
-                if i > GetRectMinX(map) then 
+            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do
+                if i > GetRectMinX(map) then
                     addNode(nodes[i][j], nodes[i - bj_CELLWIDTH][j])
                 end
-                if i < GetRectMaxX(map) then 
+                if i < GetRectMaxX(map) then
                     addNode(nodes[i][j], nodes[i + bj_CELLWIDTH][j])
                 end
-                if j > GetRectMinY(map) then 
+                if j > GetRectMinY(map) then
                     addNode(nodes[i][j], nodes[i][j - bj_CELLWIDTH])
                 end
-                if j < GetRectMaxY(map) then 
+                if j < GetRectMaxY(map) then
                     addNode(nodes[i][j], nodes[i][j + bj_CELLWIDTH])
                 end
             end
@@ -210,8 +209,8 @@ WM("ConnectRooms", function(import, export, exportDefault)
                 if costSoFar[next] == nil or newCost < costSoFar[next] then
                     costSoFar[next] = newCost
                     local priority = newCost + heuristic(
-                        GetRectCenterX(goal.rect), GetRectCenterY(goal.rect),
-                        GetRectCenterX(next.rect), GetRectCenterY(next.rect)
+                            GetRectCenterX(goal.rect), GetRectCenterY(goal.rect),
+                            GetRectCenterX(next.rect), GetRectCenterY(next.rect)
                     )
                     graph:put(next, priority)
                     cameFrom[next] = current
@@ -219,7 +218,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
             end
         end
 
-        if found then 
+        if found then
             local current = goal;
             local path = { current }
             while true do
@@ -278,13 +277,13 @@ WM("ConnectRooms", function(import, export, exportDefault)
         repeat
             i = i + dirX
             j = j + dirY
-            if i > room.width or i < 0 or j > room.height or j < 0 or  GetTerrainType(room.cells[i][j].x, room.cells[i][j].y) ~= TILE_DOOR then
+            if i > room.width or i < 0 or j > room.height or j < 0 or GetTerrainType(room.cells[i][j].x, room.cells[i][j].y) ~= TILE_DOOR then
                 break
             end
             if dirX < 0 or dirY > 0 then
                 table.insert(cells, 1, { x = room.cells[i][j].x, y = room.cells[i][j].y })
             else
-                table.insert(cells, {  x = room.cells[i][j].x, y = room.cells[i][j].y })
+                table.insert(cells, { x = room.cells[i][j].x, y = room.cells[i][j].y })
             end
         until false
 
@@ -301,7 +300,6 @@ WM("ConnectRooms", function(import, export, exportDefault)
             end
         end
 
-        
         roomCount = roomCount + 1
 
         return { horizontal = horizontal, cells = doorCellsArray, width = horizontal and #cells or 1, height = horizontal and 1 or #cells }
@@ -336,7 +334,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
                 if (room ~= otherRoom and connectedRooms[room] ~= otherRoom and connectedRooms[otherRoom] ~= room) then
                     local startDoors = getRoomDoors(room)
                     local finishRooms = getRoomDoors(otherRoom)
-                    
+
                     local start = startDoors[GetRandomInt(1, #startDoors)]
                     local finish = finishRooms[GetRandomInt(1, #finishRooms)]
                     local connected = findPath(nodes, map, start, finish)

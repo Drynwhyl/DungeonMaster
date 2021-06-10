@@ -2,7 +2,7 @@ WM("Cheats", function(import, export, exportDefault)
     local Utils = import "Utils"
 
     Utils.onGameStart(function()
-        Cheat("iseedeadpeople") 
+        Cheat("iseedeadpeople")
         --Cheat("riseandshine") 
         Cheat("thereisnospoon")
         Cheat("whosyourdaddy")

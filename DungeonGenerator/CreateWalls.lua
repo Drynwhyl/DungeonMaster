@@ -25,8 +25,8 @@ WM("CreateWalls", function(import, export, exportDefault)
     }
 
     local function findHallwayCell(map)
-        for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do  
-            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do 
+        for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
+            for j = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do
                 if GetTerrainType(i, j) == TILE_HALLWAY then
                     return { x = i, y = j }
                 end
@@ -40,11 +40,16 @@ WM("CreateWalls", function(import, export, exportDefault)
         local down = GetTerrainType(point.x, point.y - bj_CELLWIDTH)
         local left = GetTerrainType(point.x - bj_CELLWIDTH, point.y)
         local right = GetTerrainType(point.x + bj_CELLWIDTH, point.y)
+        local down_left = GetTerrainType(point.x - bj_CELLWIDTH, point.y - bj_CELLWIDTH)
+        local up_left = GetTerrainType(point.x - bj_CELLWIDTH, point.y + bj_CELLWIDTH)
+        local down_right = GetTerrainType(point.x + bj_CELLWIDTH, point.y - bj_CELLWIDTH)
+        local up_right = GetTerrainType(point.x + bj_CELLWIDTH, point.y + bj_CELLWIDTH)
         return up == TILE_EMPTY or down == TILE_EMPTY or left == TILE_EMPTY or right == TILE_EMPTY
+                or down_left == TILE_EMPTY or up_left == TILE_EMPTY or down_right == TILE_EMPTY or up_right == TILE_EMPTY
     end
 
     local function getNextCell(direction, current)
-        local directionDelta = { 
+        local directionDelta = {
             RIGHT = { x = bj_CELLWIDTH, y = 0 },
             LEFT = { x = -bj_CELLWIDTH, y = 0 },
             UP = { x = 0, y = bj_CELLWIDTH },
@@ -54,20 +59,18 @@ WM("CreateWalls", function(import, export, exportDefault)
             UP_RIGHT = { x = bj_CELLWIDTH, y = bj_CELLWIDTH },
             DOWN_RIGHT = { x = bj_CELLWIDTH, y = -bj_CELLWIDTH },
         }
-        
+
         local delta = directionDelta[direction]
-        local next = { 
-            x = current.x + delta.x,
-            y = current.y + delta.y
-        }
-        return next
+        return { x = current.x + delta.x, y = current.y + delta.y }
     end
 
-    local function checkDirection(direction, current, visited) 
+    local function checkDirection(direction, current, visited)
         local next = getNextCell(direction, current)
+
+        print(direction, GetTerrainType(next.x, next.y) ~= TILE_EMPTY, visited[next.x][next.y] ~= true, isHallwayCellOnEdge(next))
         if GetTerrainType(next.x, next.y) ~= TILE_EMPTY
-        and visited[next.x][next.y] ~= true
-        and isHallwayCellOnEdge(next) then
+                and visited[next.x][next.y] ~= true
+                and isHallwayCellOnEdge(next) then
             return next
         end
         return nil
@@ -82,7 +85,7 @@ WM("CreateWalls", function(import, export, exportDefault)
             local dist = DistanceBetweenPoints(sourceLoc, objectLoc)
             local currentAngle = AngleBetweenPoints(sourceLoc, objectLoc)
             local newLoc = PolarProjectionBJ(sourceLoc, dist, currentAngle + angle)
-            table.insert(resultList, { id = object.id, x = GetLocationX(newLoc), y = GetLocationY(newLoc), angle = object.angle + angle})
+            table.insert(resultList, { id = object.id, x = GetLocationX(newLoc), y = GetLocationY(newLoc), angle = object.angle + angle })
             RemoveLocation(newLoc)
         end
         RemoveLocation(objectLoc)
@@ -97,7 +100,7 @@ WM("CreateWalls", function(import, export, exportDefault)
         end
     end
 
-    local function placeWall(current)
+    local function placeWall(current, visitedWalls)
         local cliff = {
             { "a", "a", "a", "a" },
             { "a", "c", "c", "a" },
@@ -106,7 +109,7 @@ WM("CreateWalls", function(import, export, exportDefault)
         }
 
         -- Check left
-                print("receive", current)
+        print("receive", current)
         if GetTerrainType(current.x - bj_CELLWIDTH, current.y) == TILE_WALL then
             cliff[2][1] = "c"
             cliff[3][1] = "c"
@@ -132,33 +135,45 @@ WM("CreateWalls", function(import, export, exportDefault)
             cliff[4][1] = "c"
         end
         -- Check up-left 
-        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+        if GetTerrainType(current.x - bj_CELLWIDTH, current.y + bj_CELLWIDTH) == TILE_WALL then
             cliff[1][1] = "c"
         end
         -- Check up-right 
-        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+        if GetTerrainType(current.x + bj_CELLWIDTH, current.y + bj_CELLWIDTH) == TILE_WALL then
             cliff[1][4] = "c"
         end
         -- Check down-right 
-        if GetTerrainType(current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
+        if GetTerrainType(current.x + bj_CELLWIDTH, current.y - bj_CELLWIDTH) == TILE_WALL then
             cliff[4][4] = "c"
         end
 
         print(
-            cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1],
-            cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1],
-            cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3],
-            cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]
-         )
+                cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1],
+                cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1],
+                cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3],
+                cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]
+        )
         local cellUpLeft = WALLS[cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1]]
         local cellDownLeft = WALLS[cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]]
         local cellUpRight = WALLS[cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]]
         local cellDownRight = WALLS[cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]]
 
-        CreateDestructableZ(cellUpLeft, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
-        CreateDestructableZ(cellDownLeft, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
-        CreateDestructableZ(cellUpRight, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
-        CreateDestructableZ(cellDownRight, current.x, current.y - bj_CELLWIDTH , WALL_Z, 270.0, 1.0, -1)
+        if not visitedWalls[current.x - bj_CELLWIDTH][current.y] then
+            CreateDestructableZ(cellUpLeft, current.x - bj_CELLWIDTH, current.y, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[current.x - bj_CELLWIDTH][current.y] = true
+        end
+        if not visitedWalls[current.x - bj_CELLWIDTH][current.y - bj_CELLWIDTH] then
+            CreateDestructableZ(cellDownLeft, current.x - bj_CELLWIDTH, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[current.x - bj_CELLWIDTH][current.y - bj_CELLWIDTH] = true
+        end
+        if not visitedWalls[current.x][current.y] then
+            CreateDestructableZ(cellUpRight, current.x, current.y, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[current.x][current.y] = true
+        end
+        if not visitedWalls[current.x][current.y - bj_CELLWIDTH] then
+            CreateDestructableZ(cellDownRight, current.x, current.y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[current.x][current.y - bj_CELLWIDTH] = true
+        end
     end
 
     local counter = 0
@@ -170,23 +185,18 @@ WM("CreateWalls", function(import, export, exportDefault)
         local current = findHallwayCell(map)
         local next
         local visited = CreateAutotable(1)
-        local moveTypes = { "DOWN", "DOWN_LEFT", "LEFT", "UP_LEFT", "UP", "UP_RIGHT", "RIGHT", "DOWN_RIGHT" }
+        local visitedWalls = CreateAutotable(1)
+        local moveTypes = { "DOWN", "LEFT", "UP", "RIGHT", "DOWN_LEFT", "UP_LEFT", "UP_RIGHT", "DOWN_RIGHT" }
+        SetTerrainType(current.x, current.y, TILE_WALL, -1, 1, 1)
+        visited[current.x][current.y] = true
 
         while true do
-            PanCameraToTimed(current.x, current.y, 0)
-            if current ~= nil and (GetTerrainType(current.x, current.y) == TILE_HALLWAY or true) then
-                SetTerrainType(current.x, current.y, TILE_WALL, -1, 1, 1)
-            end
-            if prev ~= nil then
-                print("pass current", prev)
-                placeWall(prev)
-            end
-            if counter % 4 == 0 then
-                TriggerSleepAction(0)
-            end
             counter = counter + 1
-            visited[current.x][current.y] = true
+            if counter % 1 == 0 then
+                TriggerSleepAction(1)
+            end
 
+            print("directions:")
             for _, direction in ipairs(moveTypes) do
                 next = checkDirection(direction, current, visited)
                 if next then
@@ -194,8 +204,15 @@ WM("CreateWalls", function(import, export, exportDefault)
                     break
                 end
             end
+
             if next then
-                --placeWall(prev, current, next, prevMoveType, currentMoveType, nextMoveType)
+                PanCameraToTimed(next.x, next.y, 0)
+                SetTerrainType(next.x, next.y, TILE_WALL, -1, 1, 1)
+                if prev ~= nil then
+                    placeWall(prev, visitedWalls)
+                end
+                visited[next.x][next.y] = true
+
                 prev = current
                 current = next
                 prevMoveType = currentMoveType
@@ -204,7 +221,10 @@ WM("CreateWalls", function(import, export, exportDefault)
                 CreateDestructable(FourCC("OTtw"), current.x, current.y, 0, 1, -1)
                 PanCameraTo(current.x, current.y)
                 print("ERROR: next cell not found!")
-                break;
+                local nextCell = getNextCell("UP", current)
+                print("current", current.x, current.y, "next", nextCell.x, nextCell.y)
+                print(GetTerrainType(nextCell.x, nextCell.y) ~= TILE_EMPTY, visited[nextCell.x][nextCell.y] ~= true, isHallwayCellOnEdge(nextCell))
+                break
             end
         end
     end

@@ -13,7 +13,7 @@ WM("UnitEvents", function(import, export, exportDefault)
     TriggerRegisterAnyUnitEventBJ(onRemoveTrigger, EVENT_PLAYER_UNIT_ISSUED_ORDER)
     TriggerAddCondition(onRemoveTrigger, Condition(function()
         return GetIssuedOrderId() == OrderId("undefend")
-        and GetUnitAbilityLevel(GetTriggerUnit(), DETECT_UNIT_REMOVED_ABILITY_ID) == 0 --Unit already removed
+                and GetUnitAbilityLevel(GetTriggerUnit(), DETECT_UNIT_REMOVED_ABILITY_ID) == 0 --Unit already removed
     end))
     TriggerRegisterEnterRectSimple(onCreateTrigger, GetPlayableMapRect())
     for i = 0, bj_MAX_PLAYER_SLOTS - 1 do

@@ -4,7 +4,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local CreateAutotable = import "CreateAutotable"
     local ConnectRooms = import "ConnectRooms"
     local CreateWalls = import "CreateWalls"
-    
+
     local SHAPE_CIRCLE = 0
     local SHAPE_SQUARE = 1
 
@@ -17,7 +17,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         gg_rct_Region_000,
         gg_rct_Region_001,
     }
-    
+
     local roomTemplates = {}
     local rooms = {}
     local map = gg_rct_Dungeon --GetPlayableMapRect()
@@ -39,7 +39,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
                 end
             end
             table.insert(roomTemplates, room)
-        end 
+        end
     end
 
     local function allNearestCellsIsEmpty(x, y, size)
@@ -71,7 +71,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
             for j = 0, room.height do
                 print("i " .. i .. " j " .. j)
                 placedRoom.cells[i][j] = { x = (x + i) * bj_CELLWIDTH, y = (y + j) * bj_CELLWIDTH, tile = room.cells[i][j] }
-                SetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH, room.cells[i][j], RANDOM_VARIATION,  1, SHAPE_SQUARE)
+                SetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH, room.cells[i][j], RANDOM_VARIATION, 1, SHAPE_SQUARE)
             end
         end
         return placedRoom
@@ -109,11 +109,11 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         print("invoke generation")
         parseRoomTemplates()
         print("rooms read")
-        placeRooms()
+        --placeRooms()
         print("rooms placed")
         local trigger = CreateTrigger()
         TriggerAddAction(trigger, Utils.pcall(function()
-            ConnectRooms(rooms, map)
+            --ConnectRooms(rooms, map)
             CreateWalls(map)
         end))
         TriggerExecute(trigger)
