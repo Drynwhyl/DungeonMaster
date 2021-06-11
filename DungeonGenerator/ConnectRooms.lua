@@ -242,12 +242,10 @@ WM("ConnectRooms", function(import, export, exportDefault)
                 current.hallway = true
                 table.insert(path, current)
                 SetTerrainType(GetRectCenterX(current.rect), GetRectCenterY(current.rect), TILE_HALLWAY, -1, 3, 1)
-                -- draw hallway walls
                 for i = GetRectMinX(current.rect), GetRectMaxX(current.rect), bj_CELLWIDTH do
                     for j = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
-                        --print(GetTerrainType(i, j) == TILE_HALLWAY, cellContainsPathing(i, j, bj_CELLWIDTH))
                         if GetTerrainType(i, j) == TILE_HALLWAY and cellContainsPathing(i, j, bj_CELLWIDTH, TILE_EMPTY) then
-                            --TriggerSleepAction(1)
+                            -- TODO move wall texture generation outside find pathing function: scan every map cell and do the same algorithm
                             SetTerrainType(i, j, TILE_WALL, -1, 1, 0)
                         end
                     end

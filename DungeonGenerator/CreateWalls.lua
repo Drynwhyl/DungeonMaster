@@ -22,6 +22,8 @@ WM("CreateWalls", function(import, export, exportDefault)
         ccaa = FourCC("B009"),
         ccac = FourCC("B00C"),
         ccca = FourCC("B00D"),
+        cccc = FourCC("ZTtw"), -- mark full cell
+        aaaa = FourCC("OTtw"), -- mark empty cell
     }
 
     local function findHallwayCell(map)
@@ -101,7 +103,6 @@ WM("CreateWalls", function(import, export, exportDefault)
         }
 
         -- Check left
-        print("receive", current)
         if GetTerrainType(current.x - bj_CELLWIDTH, current.y) == TILE_WALL then
             cliff[2][1] = "c"
             cliff[3][1] = "c"
@@ -165,75 +166,13 @@ WM("CreateWalls", function(import, export, exportDefault)
     end
 
     local function CreateWalls(map)
-        local counter = 0
-        local prevMoveType
-        local currentMoveType
-        local nextMoveType
-        local prevCell
-        local currCell = findHallwayCell(map)
-        local nextCell
-        local visited = CreateAutotable(1)
         local visitedWalls = CreateAutotable(1)
-        local visitedToRemove = CreateAutotable(1)
-        local moveTypes = { "DOWN", "LEFT", "UP", "RIGHT", "DOWN_LEFT", "UP_LEFT", "UP_RIGHT", "DOWN_RIGHT" }
-        SetTerrainType(currCell.x, currCell.y, TILE_WALL, -1, 1, 1)
-        visited[currCell.x][currCell.y] = true
-        visitedToRemove[currCell.x][currCell.y] = { next = currCell, currCell = nil, prev = nil }
-
-        while true do
-            if counter % 5 == 0 then
-                TriggerSleepAction(0)
-            end
-
-            print("directions:")
-            for _, direction in ipairs(moveTypes) do
-                nextCell = checkDirection(direction, currCell, visited)
-                if nextCell then
-                    nextMoveType = direction
-                    break
+        for x = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
+            for y = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do
+                if GetTerrainType(x, y) == TILE_WALL then
+                    placeWall({ x = x, y = y }, visitedWalls)
                 end
             end
-
-            if nextCell then
-                PanCameraToTimed(nextCell.x, nextCell.y, 0)
-                SetTerrainType(nextCell.x, nextCell.y, TILE_WALL, -1, 1, 1)
-                if prevCell ~= nil then
-                    if counter >= 3 then
-                        placeWall(prevCell, visitedWalls)
-                    end
-                end
-                if counter < 3 then
-                    visitedToRemove[nextCell.x][nextCell.y] = { next = nextCell, current = currCell, prev = prevCell }
-                end
-                visited[nextCell.x][nextCell.y] = true
-
-                prevCell = currCell
-                currCell = nextCell
-                prevMoveType = currentMoveType
-                currentMoveType = nextMoveType
-            elseif visitedToRemove ~= nil then
-                for _, list in pairs(visitedToRemove) do
-                    for _, val in pairs(list) do
-                        if val.next ~= nil then
-                            visited[val.next.x][val.next.y] = nil
-                        end
-                    end
-                end
-                visitedToRemove = nil
-            else
-                if visitedToRemove == nil then
-                    break
-                end
-                CreateDestructable(FourCC("OTtw"), currCell.x, currCell.y, 0, 1, -1)
-                PanCameraTo(currCell.x, currCell.y)
-                print("ERROR: next cell not found!")
-                local nextCell = getNextCell("UP", currCell)
-                print("current", currCell.x, currCell.y, "next", nextCell.x, nextCell.y)
-                print(GetTerrainType(nextCell.x, nextCell.y) ~= TILE_EMPTY, visited[nextCell.x][nextCell.y] ~= true, isHallwayCellOnEdge(nextCell))
-                break
-            end
-
-            counter = counter + 1
         end
     end
 
