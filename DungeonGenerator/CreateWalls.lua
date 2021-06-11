@@ -164,8 +164,8 @@ WM("CreateWalls", function(import, export, exportDefault)
         end
     end
 
-    local counter = 0
     local function CreateWalls(map)
+        local counter = 0
         local prevMoveType
         local currentMoveType
         local nextMoveType
@@ -181,8 +181,8 @@ WM("CreateWalls", function(import, export, exportDefault)
         visitedToRemove[currCell.x][currCell.y] = { next = currCell, currCell = nil, prev = nil }
 
         while true do
-            if counter % 1 == 0 then
-                TriggerSleepAction(visitedToRemove == nil and 1 or 0)
+            if counter % 5 == 0 then
+                TriggerSleepAction(0)
             end
 
             print("directions:")
@@ -198,27 +198,11 @@ WM("CreateWalls", function(import, export, exportDefault)
                 PanCameraToTimed(nextCell.x, nextCell.y, 0)
                 SetTerrainType(nextCell.x, nextCell.y, TILE_WALL, -1, 1, 1)
                 if prevCell ~= nil then
-                    if visitedToRemove == nil then
-                        if visitedWalls[prevCell.x][prevCell.y] then
-                            RemoveDestructable(visitedWalls[prevCell.x][prevCell.y])
-                            visitedWalls[prevCell.x][prevCell.y] = nil
-                        end
-                        if visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y] then
-                            RemoveDestructable(visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y])
-                            visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y] = nil
-                        end
-                        if visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH] then
-                            RemoveDestructable(visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH])
-                            visitedWalls[prevCell.x][prevCell.y - bj_CELLWIDTH] = nil
-                        end
-                        if visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH] then
-                            RemoveDestructable(visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH])
-                            visitedWalls[prevCell.x - bj_CELLWIDTH][prevCell.y - bj_CELLWIDTH] = nil
-                        end
+                    if counter >= 3 then
+                        placeWall(prevCell, visitedWalls)
                     end
-                    placeWall(prevCell, visitedWalls)
                 end
-                if counter < 6 then
+                if counter < 3 then
                     visitedToRemove[nextCell.x][nextCell.y] = { next = nextCell, current = currCell, prev = prevCell }
                 end
                 visited[nextCell.x][nextCell.y] = true
@@ -228,16 +212,18 @@ WM("CreateWalls", function(import, export, exportDefault)
                 prevMoveType = currentMoveType
                 currentMoveType = nextMoveType
             elseif visitedToRemove ~= nil then
-                for x, list in pairs(visitedToRemove) do
-                    for y, val in pairs(list) do
+                for _, list in pairs(visitedToRemove) do
+                    for _, val in pairs(list) do
                         if val.next ~= nil then
                             visited[val.next.x][val.next.y] = nil
                         end
                     end
                 end
-                TriggerSleepAction(5)
                 visitedToRemove = nil
             else
+                if visitedToRemove == nil then
+                    break
+                end
                 CreateDestructable(FourCC("OTtw"), currCell.x, currCell.y, 0, 1, -1)
                 PanCameraTo(currCell.x, currCell.y)
                 print("ERROR: next cell not found!")

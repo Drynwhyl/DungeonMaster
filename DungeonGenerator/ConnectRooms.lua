@@ -21,6 +21,25 @@ WM("ConnectRooms", function(import, export, exportDefault)
         return false
     end
 
+    local function cellContainsPathing(x, y, size, ...)
+        local pathings = {}
+        for _, value in ipairs(table.pack(...)) do
+            pathings[value] = true
+        end
+        for i = x - size, x + size, bj_CELLWIDTH do
+            for j = y - size, y + size, bj_CELLWIDTH do
+                if pathings[GetTerrainType(i, j)] == true then
+                    --print("original ", x / bj_CELLWIDTH, y / bj_CELLWIDTH, "new " , i / bj_CELLWIDTH, j / bj_CELLWIDTH)
+                    --DestroyEffect(AddSpecialEffect("Abilities\\Weapons\\FireBallMissile\\FireBallMissile.mdl", i, j))
+                    --PanCameraToTimed(i, j, 0)
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+
     local function cellsContainsAllPathings(x, y, size, ...)
         local pathings = {}
         for _, value in ipairs(table.pack(...)) do
@@ -194,13 +213,6 @@ WM("ConnectRooms", function(import, export, exportDefault)
                     moveCost = moveCost + 5
                 end
 
-                local x = GetRectCenterX(next.rect)
-                local y = GetRectCenterY(next.rect)
-
-                --  if not cellsContainsAllPathings(x, y, getDoorSize(startDoor), TILE_EMPTY, TILE_HALLWAY) then
-                --     --moveCost = moveCost + 10
-                -- end
-
                 if next.hallway == true then
                     moveCost = 0
                 end
@@ -218,6 +230,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
             end
         end
 
+        -- Draw hallways
         if found then
             local current = goal;
             local path = { current }
@@ -229,14 +242,16 @@ WM("ConnectRooms", function(import, export, exportDefault)
                 current.hallway = true
                 table.insert(path, current)
                 SetTerrainType(GetRectCenterX(current.rect), GetRectCenterY(current.rect), TILE_HALLWAY, -1, 3, 1)
-                -- for i = GetRectMinX(current.rect), GetRectMaxX(current.rect), bj_CELLWIDTH do
-                --     SetTerrainType(i, GetRectMinY(current.rect), TILE_WALL, -1, 1, 1)
-                --     SetTerrainType(i, GetRectMaxY(current.rect), TILE_WALL, -1, 1, 1)
-                -- end
-                -- for i = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
-                --     SetTerrainType(GetRectMinX(current.rect), i, TILE_WALL, -1, 1, 1)
-                --     SetTerrainType(GetRectMaxX(current.rect), i, TILE_WALL, -1, 1, 1)
-                -- end
+                -- draw hallway walls
+                for i = GetRectMinX(current.rect), GetRectMaxX(current.rect), bj_CELLWIDTH do
+                    for j = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
+                        --print(GetTerrainType(i, j) == TILE_HALLWAY, cellContainsPathing(i, j, bj_CELLWIDTH))
+                        if GetTerrainType(i, j) == TILE_HALLWAY and cellContainsPathing(i, j, bj_CELLWIDTH, TILE_EMPTY) then
+                            --TriggerSleepAction(1)
+                            SetTerrainType(i, j, TILE_WALL, -1, 1, 0)
+                        end
+                    end
+                end
             end
         end
 
@@ -266,7 +281,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
             dirY = -1
             horizontal = false
         else
-            print("ERROR single cell room!!!")
+            print("ERROR single cell door!!!")
             CreateDestructable(FourCC("LTcr"), room.cells[x][y].x, room.cells[x][y].y, 0, 1, -1)
             dirX = 1
             horizontal = false
@@ -289,7 +304,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
 
         print("cell # in door " .. #cells)
 
-        local doorCellsArray = CreateAutotable()
+        local doorCellsArray = CreateAutotable(1)
         if horizontal then
             for index, cell in ipairs(cells) do
                 doorCellsArray[index - 1][0] = cell
@@ -327,26 +342,45 @@ WM("ConnectRooms", function(import, export, exportDefault)
     local function ConnectRooms(rooms, _map)
         map = _map
         local connectedRooms = {}
-        local roomCount = 0
+        local hallwayCount = 0
         local nodes = createGraph(map)
+
+        for _, room in pairs(rooms) do
+            room.doors = getRoomDoors(room)
+        end
+
         for _, room in pairs(rooms) do
             for _, otherRoom in pairs(rooms) do
                 if (room ~= otherRoom and connectedRooms[room] ~= otherRoom and connectedRooms[otherRoom] ~= room) then
-                    local startDoors = getRoomDoors(room)
-                    local finishRooms = getRoomDoors(otherRoom)
-
-                    local start = startDoors[GetRandomInt(1, #startDoors)]
-                    local finish = finishRooms[GetRandomInt(1, #finishRooms)]
-                    local connected = findPath(nodes, map, start, finish)
+                    local startIndex = GetRandomInt(1, #room.doors);
+                    local finishIndex = GetRandomInt(1, #otherRoom.doors)
+                    local startDoor = room.doors[startIndex]
+                    local finishDoor = otherRoom.doors[finishIndex]
+                    
+                    local connected = findPath(nodes, map, startDoor, finishDoor)
                     if connected then
+                        room.doors[startIndex].visited = true
+                        otherRoom.doors[finishIndex].visited = true
                         connectedRooms[room] = otherRoom
                         connectedRooms[otherRoom] = room
                         if GetRandomInt(1, 2) == 1 then
                             break
                         end
                     end
-                    roomCount = roomCount + 1
-                    print("room count", roomCount)
+                    hallwayCount = hallwayCount + 1
+                    print("hallway count", hallwayCount)
+                end
+            end
+        end
+
+        for _, room in pairs(rooms) do
+            for _, door in pairs(room.doors) do
+                if door.visited ~= true then
+                    for _, cellRow in pairs(door.cells) do
+                        for _, cell in pairs(cellRow) do
+                            SetTerrainType(cell.x, cell.y, TILE_WALL, -1, 1, 0)
+                        end
+                    end
                 end
             end
         end

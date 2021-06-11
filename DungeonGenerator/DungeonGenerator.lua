@@ -83,6 +83,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local mapMaxX = GetRectMaxX(map) / bj_CELLWIDTH
         local mapMaxY = GetRectMaxY(map) / bj_CELLWIDTH
         for i = 1, ROOM_PLACEMENT_ATTEMPS do
+            print("room wh: ", room.width, room.height)
             local x = GetRandomInt(mapMinX + 1, mapMaxX - room.width - 1)   -- Add 1 extra cell to avoid placing rooms at edges of map
             local y = GetRandomInt(mapMinY + 1, mapMaxY - room.height - 1)
             if (isRoomPlaceable(room, x, y)) then
@@ -109,12 +110,12 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         print("invoke generation")
         parseRoomTemplates()
         print("rooms read")
-        --placeRooms()
+        placeRooms()
         print("rooms placed")
         local trigger = CreateTrigger()
         TriggerAddAction(trigger, Utils.pcall(function()
-            --ConnectRooms(rooms, map)
-            CreateWalls(map)
+            ConnectRooms(rooms, map)
+            --CreateWalls(map)
         end))
         TriggerExecute(trigger)
     end))
