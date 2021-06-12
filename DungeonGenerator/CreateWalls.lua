@@ -137,25 +137,41 @@ WM("CreateWalls", function(import, export, exportDefault)
             cliff[4][4] = "c"
         end
 
+        function repeats(str, char)
+            local _, n = str:gsub(char, "")
+            return n
+        end
+
+        local strUpLeft = cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1];
+        local strDownLeft = cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]
+        local strUpRight = cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]
+        local strDownRight = cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]
+
+        local varUpLeft = GetRandomInt(0, repeats(strUpLeft, "c"))
+        local varDownLeft = GetRandomInt(0, repeats(strDownLeft, "c"))
+        local varUpRight = GetRandomInt(0, repeats(strUpRight, "c"))
+        local varDownRight = GetRandomInt(0, repeats(strDownRight, "c"))
+
         local cellUpLeft = WALLS[cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1]]
         local cellDownLeft = WALLS[cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]]
         local cellUpRight = WALLS[cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]]
         local cellDownRight = WALLS[cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]]
 
         if not visitedWalls[x - bj_CELLWIDTH][y] then
-            visitedWalls[x - bj_CELLWIDTH][y] = CreateDestructableZ(cellUpLeft, x - bj_CELLWIDTH, y, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[x - bj_CELLWIDTH][y] = CreateDestructableZ(cellUpLeft, x - bj_CELLWIDTH, y, WALL_Z, 270.0, 1.0, varUpLeft)
         end
         if not visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] then
-            visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownLeft, x - bj_CELLWIDTH, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownLeft, x - bj_CELLWIDTH, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, varDownLeft)
         end
         if not visitedWalls[x][y] then
-            visitedWalls[x][y] = CreateDestructableZ(cellUpRight, x, y, WALL_Z, 270.0, 1.0, -1)
+            visitedWalls[x][y] = CreateDestructableZ(cellUpRight, x, y, WALL_Z, 270.0, 1.0, varUpRight)
         end
         if not visitedWalls[x][y - bj_CELLWIDTH] then
-            visitedWalls[x][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownRight, x, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, -1)
+            BlzGetItemIntegerField()
+            visitedWalls[x][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownRight, x, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, varDownRight)
         end
 
-        CreateDestructable(PATH_BLOCK_ID, x, y, 270.0, 1.0, -1)
+        CreateDestructable(PATH_BLOCK_ID, x, y, 270.0, 1.0, 0)
     end
 
     local function CreateWalls(map)

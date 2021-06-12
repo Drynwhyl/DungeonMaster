@@ -337,11 +337,20 @@ WM("ConnectRooms", function(import, export, exportDefault)
         return doors
     end
 
-    local function ConnectRooms(rooms, _map)
+    local function ConnectRooms(_map, rooms, startRoom, bossRoom)
         map = _map
         local connectedRooms = {}
         local hallwayCount = 0
         local nodes = createGraph(map)
+
+        local _, startRoomDoor = next(getRoomDoors(startRoom))
+        local _, bossRoomDoor = next(getRoomDoors(bossRoom))
+        print(startRoomDoor, bossRoomDoor)
+
+        if not findPath(nodes, map, startRoomDoor, bossRoomDoor) then
+            print("ERROR! cannot find path from start room to boss room!!!!")
+            return
+        end
 
         for _, room in pairs(rooms) do
             room.doors = getRoomDoors(room)
@@ -379,6 +388,11 @@ WM("ConnectRooms", function(import, export, exportDefault)
                             SetTerrainType(cell.x, cell.y, TILE_WALL, -1, 1, 0)
                         end
                     end
+                else
+                    local horizontalDoor = FourCC("ITg1")
+                    local verticalDoor = FourCC("ITg3")
+                    local center = getDoorCenter(door)
+                    CreateDestructable(door.horizontal and horizontalDoor or verticalDoor, center.x, center.y, 270.0, 1.0, -1)
                 end
             end
         end
