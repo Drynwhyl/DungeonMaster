@@ -235,12 +235,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
             local current = goal;
             local path = { current }
             while true do
-                if current == cameFrom[current] then
-                    break
-                end
-                current = cameFrom[current]
                 current.hallway = true
-                table.insert(path, current)
                 SetTerrainType(GetRectCenterX(current.rect), GetRectCenterY(current.rect), TILE_HALLWAY, -1, 3, 1)
                 for i = GetRectMinX(current.rect), GetRectMaxX(current.rect), bj_CELLWIDTH do
                     for j = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
@@ -250,6 +245,11 @@ WM("ConnectRooms", function(import, export, exportDefault)
                         end
                     end
                 end
+                if current == start then
+                    break
+                end
+                current = cameFrom[current]
+                table.insert(path, current)
             end
         end
 

@@ -3,7 +3,7 @@ WM("Cheats", function(import, export, exportDefault)
 
     Utils.onGameStart(function()
         Cheat("iseedeadpeople")
-        --Cheat("riseandshine") 
+        --Cheat("riseandshine")
         Cheat("thereisnospoon")
         Cheat("whosyourdaddy")
         SetRandomSeed(534435)

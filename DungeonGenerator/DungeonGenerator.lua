@@ -10,7 +10,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
 
     local RANDOM_VARIATION = -1
     local ROOM_PLACEMENT_ATTEMPS = 10
-    local MIN_CORIDOR_WIDTH = 4
+    local MIN_CORRIDOR_WIDTH = 4
     local ROOM_NUMBER = 10
 
     local roomTemplateRects = {
@@ -18,28 +18,41 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         gg_rct_Region_001,
     }
 
+    local startRoomTemplateRect = gg_rct_StartRoom_001
+    local startRoomTemplate
+    local startRoom
+    local bossRoomTemplateRect = gg_rct_BossRoom_001
+    local bossRoomTemplate
+    local bossRoom
+
     local roomTemplates = {}
     local rooms = {}
     local map = gg_rct_Dungeon --GetPlayableMapRect()
 
+    local function parseRoomTemplate(rect)
+        local width = GetRectWidthBJ(rect) / bj_CELLWIDTH
+        local height = GetRectHeightBJ(rect) / bj_CELLWIDTH
+        local minX = GetRectMinX(rect)
+        local minY = GetRectMinY(rect)
+        local room = { width = width, height = height, cells = CreateAutotable(1) }
+        for i = 0, width do
+            for j = 0, height do
+                room.cells[i][j] = GetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH);
+                if (room.cells[i][j] == TILE_EMPTY) then
+                    print("EMPTY!")
+                end
+                SetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
+            end
+        end
+        return room
+    end
+
     local function parseRoomTemplates()
         for _, rect in ipairs(roomTemplateRects) do
-            local width = GetRectWidthBJ(rect) / bj_CELLWIDTH
-            local height = GetRectHeightBJ(rect) / bj_CELLWIDTH
-            local minX = GetRectMinX(rect)
-            local minY = GetRectMinY(rect)
-            room = { width = width, height = height, cells = CreateAutotable() }
-            for i = 0, width do
-                for j = 0, height do
-                    room.cells[i][j] = GetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH);
-                    if (room.cells[i][j] == TILE_EMPTY) then
-                        print("EMPTY!")
-                    end
-                    SetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
-                end
-            end
-            table.insert(roomTemplates, room)
+            table.insert(roomTemplates, parseRoomTemplate(rect))
         end
+        startRoomTemplate = parseRoomTemplate(startRoomTemplateRect)
+        bossRoomTemplate = parseRoomTemplate(bossRoomTemplateRect)
     end
 
     local function allNearestCellsIsEmpty(x, y, size)
@@ -57,7 +70,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local function isRoomPlaceable(room, x, y)
         for i = 0, room.width do
             for j = 0, room.height do
-                if (not allNearestCellsIsEmpty(x + i, y + j, MIN_CORIDOR_WIDTH)) then
+                if (not allNearestCellsIsEmpty(x + i, y + j, MIN_CORRIDOR_WIDTH)) then
                     return false
                 end
             end
@@ -65,8 +78,68 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         return true
     end
 
+    local function transpose(matrix, width, height)
+        local newMatrix = CreateAutotable(1)
+        for i = 0, width do
+            for j = 0, height do
+                newMatrix[i][j] = matrix[j][i]
+            end
+        end
+        return newMatrix
+    end
+
+    local function reverseRows(matrix, width, height)
+        local newMatrix = CreateAutotable(1)
+        for i = 0, width do
+            for j = 0, height do
+                newMatrix[i][j] = matrix[i][height - j]
+            end
+        end
+        return newMatrix
+    end
+
+    local function reverseCols(matrix, width, height)
+        local newMatrix = CreateAutotable(1)
+        for i = 0, width do
+            for j = 0, height do
+                newMatrix[i][j] = matrix[width - i][j]
+            end
+        end
+        return newMatrix
+    end
+
+    local function rotateRoomTemplate(roomTemplate, angle)
+        if angle == 90 then
+            return {
+                width = roomTemplate.height,
+                height = roomTemplate.width,
+                cells = reverseCols(
+                        transpose(roomTemplate.cells, roomTemplate.width, roomTemplate.height),
+                        roomTemplate.height, roomTemplate.width
+                )
+            }
+        elseif angle == 270 then
+            return {
+                width = roomTemplate.height,
+                height = roomTemplate.width,
+                cells = reverseRows(
+                        transpose(roomTemplate.cells, roomTemplate.width, roomTemplate.height),
+                        roomTemplate.height, roomTemplate.width
+                )
+            }
+        elseif angle == 180 then
+            return {
+                width = roomTemplate.width,
+                height = roomTemplate.height,
+                cells = reverseCols(reverseRows(roomTemplate.cells, roomTemplate.width, roomTemplate.height), roomTemplate.width, roomTemplate.height)
+            }
+        else
+            return roomTemplate
+        end
+    end
+
     local function placeRoom(room, x, y)
-        local placedRoom = { width = room.width, height = room.height, cells = CreateAutotable() }
+        local placedRoom = { width = room.width, height = room.height, cells = CreateAutotable(1) }
         for i = 0, room.width do
             for j = 0, room.height do
                 print("i " .. i .. " j " .. j)
@@ -95,14 +168,38 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     end
 
     local function placeRooms()
+        local attempts = 0
+        while startRoom == nil do
+            startRoom = placeRandomRoom(rotateRoomTemplate(startRoomTemplate, GetRandomInt(0, 3) * 90))
+            print("attemps start room", attempts)
+            attempts = attempts + 1
+        end
+        table.insert(rooms, startRoom)
+        attempts = 0
+        while bossRoom == nil do
+            bossRoom = placeRandomRoom(rotateRoomTemplate(bossRoomTemplate, GetRandomInt(0, 3) * 90))
+            print("attemps start room", attempts)
+            attempts = attempts + 1
+        end
+        table.insert(rooms, bossRoom)
+
         for i = 1, ROOM_NUMBER do
             local roomTemplate = roomTemplates[GetRandomInt(1, #roomTemplates)]
-            local placedRoom = placeRandomRoom(roomTemplate)
+            local rotatedTemplate = rotateRoomTemplate(roomTemplate, GetRandomInt(0, 3) * 90)
+            local placedRoom = placeRandomRoom(rotatedTemplate)
             if placedRoom ~= nil then
                 table.insert(rooms, placedRoom)
                 print("placed room number " .. i)
             end
         end
+
+        --if startRoom == nil then
+        --    print("Error! cannot place start room!")
+        --
+        --end
+        --if bossRoom == nil then
+        --    print("Error! cannot place boss room!")
+        --end
     end
 
     Utils.onGameStart(Utils.pcall(function()
