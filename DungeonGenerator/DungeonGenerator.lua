@@ -9,7 +9,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local SHAPE_SQUARE = 1
 
     local RANDOM_VARIATION = -1
-    local ROOM_PLACEMENT_ATTEMPS = 10
+    local ROOM_PLACEMENT_ATTEMPTS = 10
     local MIN_CORRIDOR_WIDTH = 5
     local ROOM_NUMBER = 10
 
@@ -131,7 +131,10 @@ WM("DungeonGenerator", function(import, export, exportDefault)
             return {
                 width = roomTemplate.width,
                 height = roomTemplate.height,
-                cells = reverseCols(reverseRows(roomTemplate.cells, roomTemplate.width, roomTemplate.height), roomTemplate.width, roomTemplate.height)
+                cells = reverseCols(
+                        reverseRows(roomTemplate.cells, roomTemplate.width, roomTemplate.height),
+                        roomTemplate.width, roomTemplate.height
+                )
             }
         else
             return roomTemplate
@@ -142,7 +145,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local placedRoom = { width = room.width, height = room.height, cells = CreateAutotable(1) }
         for i = 0, room.width do
             for j = 0, room.height do
-                print("i " .. i .. " j " .. j)
+                --print("i " .. i .. " j " .. j)
                 placedRoom.cells[i][j] = { x = (x + i) * bj_CELLWIDTH, y = (y + j) * bj_CELLWIDTH, tile = room.cells[i][j] }
                 SetTerrainType((x + i) * bj_CELLWIDTH, (y + j) * bj_CELLWIDTH, room.cells[i][j], RANDOM_VARIATION, 1, SHAPE_SQUARE)
             end
@@ -155,18 +158,19 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local mapMinY = GetRectMinY(map) / bj_CELLWIDTH
         local mapMaxX = GetRectMaxX(map) / bj_CELLWIDTH
         local mapMaxY = GetRectMaxY(map) / bj_CELLWIDTH
-        for i = 1, ROOM_PLACEMENT_ATTEMPS do
-            print("room wh: ", room.width, room.height)
+        for _ = 1, ROOM_PLACEMENT_ATTEMPTS do
+            --print("room wh: ", room.width, room.height)
             local x = GetRandomInt(mapMinX + 1, mapMaxX - room.width - 1)   -- Add 1 extra cell to avoid placing rooms at edges of map
             local y = GetRandomInt(mapMinY + 1, mapMaxY - room.height - 1)
             if (isRoomPlaceable(room, x, y)) then
                 return placeRoom(room, x, y)
             end
         end
-        print("place room failed ")
+        --print("place room failed ")
         return nil
     end
 
+    local farthestRoomFromStart
     local function placeRooms()
         local attempts = 0
         while startRoom == nil do
@@ -185,6 +189,10 @@ WM("DungeonGenerator", function(import, export, exportDefault)
             print("attemps start room", attempts)
             attempts = attempts + 1
         end
+        local roomLoc = Location(0, 0)
+        local startRoomCenter = startRoom.cells[startRoom.width // 2][startRoom.height // 2]
+        local startRoomLoc = Location(startRoomCenter.x, startRoomCenter.y)
+        local startRoomDistance = 0
         --table.insert(rooms, bossRoom)
 
         for i = 1, ROOM_NUMBER do
@@ -193,19 +201,23 @@ WM("DungeonGenerator", function(import, export, exportDefault)
             print("random angle", randomAngle)
             local rotatedTemplate = rotateRoomTemplate(roomTemplate, randomAngle)
             local placedRoom = placeRandomRoom(rotatedTemplate)
-            if placedRoom ~= nil then
+            if placedRoom then
+                local center = placedRoom.cells[placedRoom.width // 2][placedRoom.height // 2]
+                MoveLocation(roomLoc, center.x, center.y)
+                local dist = DistanceBetweenPoints(roomLoc, startRoomLoc)
+                if dist > startRoomDistance then
+                    startRoomDistance = dist
+                    farthestRoomFromStart = placedRoom
+                end
                 table.insert(rooms, placedRoom)
                 print("placed room number " .. i)
             end
         end
 
-        --if startRoom == nil then
-        --    print("Error! cannot place start room!")
-        --
-        --end
-        --if bossRoom == nil then
-        --    print("Error! cannot place boss room!")
-        --end
+        RemoveLocation(roomLoc)
+        RemoveLocation(startRoomLoc)
+
+        -- Generate boss room gate and gate opening button
     end
 
     Utils.onGameStart(Utils.pcall(function()
@@ -217,7 +229,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         print("rooms placed")
         local trigger = CreateTrigger()
         TriggerAddAction(trigger, Utils.pcall(function()
-            ConnectRooms(map, rooms, startRoom, bossRoom)
+            ConnectRooms(map, rooms, startRoom, bossRoom, farthestRoomFromStart)
             CreateWalls(map)
         end))
         TriggerExecute(trigger)

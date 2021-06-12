@@ -39,7 +39,6 @@ WM("ConnectRooms", function(import, export, exportDefault)
         return false
     end
 
-
     local function cellsContainsAllPathings(x, y, size, ...)
         local pathings = {}
         for _, value in ipairs(table.pack(...)) do
@@ -337,7 +336,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
         return doors
     end
 
-    local function ConnectRooms(_map, rooms, startRoom, bossRoom)
+    local function ConnectRooms(_map, rooms, startRoom, bossRoom, farthestRoomFromStart)
         map = _map
         local connectedRooms = {}
         local hallwayCount = 0
@@ -363,7 +362,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
                     local finishIndex = GetRandomInt(1, #otherRoom.doors)
                     local startDoor = room.doors[startIndex]
                     local finishDoor = otherRoom.doors[finishIndex]
-                    
+
                     local connected = findPath(nodes, map, startDoor, finishDoor)
                     if connected then
                         room.doors[startIndex].visited = true
@@ -388,15 +387,31 @@ WM("ConnectRooms", function(import, export, exportDefault)
                             SetTerrainType(cell.x, cell.y, TILE_WALL, -1, 1, 0)
                         end
                     end
-                else
-                    local horizontalDoor = FourCC("ITg1")
-                    local verticalDoor = FourCC("ITg3")
-                    local center = getDoorCenter(door)
-                    CreateDestructable(door.horizontal and horizontalDoor or verticalDoor, center.x, center.y, 270.0, 1.0, -1)
                 end
             end
         end
 
+        local roomCenter = farthestRoomFromStart.cells[farthestRoomFromStart.width // 2][farthestRoomFromStart.height // 2]
+        local footSwitch = CreateDestructable(FourCC("DTfp"), roomCenter.x, roomCenter.y, 0, 1, 0)
+        local footSwitchRegion = CreateRegion()
+        RegionAddRect(footSwitchRegion, Rect(
+                roomCenter.x - 0.5 * bj_CELLWIDTH,
+                roomCenter.y - 0.5 * bj_CELLWIDTH,
+                roomCenter.x + 0.5 * bj_CELLWIDTH,
+                roomCenter.y + 0.5 * bj_CELLWIDTH
+        ))
+
+        local horizontalDoor = FourCC("ITg1")
+        local verticalDoor = FourCC("ITg3")
+        local center = getDoorCenter(bossRoomDoor)
+        local gate = CreateDestructable(bossRoomDoor.horizontal and horizontalDoor or verticalDoor, center.x, center.y, 270.0, 1.0, -1)
+
+        TriggerRegisterEnterRegion(CreateTrigger(), footSwitchRegion, Filter(function()
+            if GetPlayerController(GetOwningPlayer(GetFilterUnit())) == MAP_CONTROL_USER and GetDestructableLife(footSwitch) > 0 then
+                KillDestructable(footSwitch)
+                ModifyGateBJ(bj_GATEOPERATION_OPEN, gate)
+            end
+        end))
     end
 
     exportDefault(ConnectRooms)
