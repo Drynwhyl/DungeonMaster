@@ -405,9 +405,10 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local verticalDoor = FourCC("ITg3")
         local center = getDoorCenter(bossRoomDoor)
         local gate = CreateDestructable(bossRoomDoor.horizontal and horizontalDoor or verticalDoor, center.x, center.y, 270.0, 1.0, -1)
+        SetDestructableInvulnerable(gate, true)
 
         TriggerRegisterEnterRegion(CreateTrigger(), footSwitchRegion, Filter(function()
-            if GetPlayerController(GetOwningPlayer(GetFilterUnit())) == MAP_CONTROL_USER and GetDestructableLife(footSwitch) > 0 then
+            if GetPlayerController(GetOwningPlayer(GetFilterUnit())) == MAP_CONTROL_USER and IsDestructableAliveBJ(footSwitch) then
                 KillDestructable(footSwitch)
                 ModifyGateBJ(bj_GATEOPERATION_OPEN, gate)
             end

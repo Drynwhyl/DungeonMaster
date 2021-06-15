@@ -160,8 +160,8 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local mapMaxY = GetRectMaxY(map) / bj_CELLWIDTH
         for _ = 1, ROOM_PLACEMENT_ATTEMPTS do
             --print("room wh: ", room.width, room.height)
-            local x = GetRandomInt(mapMinX + 1, mapMaxX - room.width - 1)   -- Add 1 extra cell to avoid placing rooms at edges of map
-            local y = GetRandomInt(mapMinY + 1, mapMaxY - room.height - 1)
+            local x = GetRandomInt(mapMinX + MIN_CORRIDOR_WIDTH, mapMaxX - room.width - MIN_CORRIDOR_WIDTH)   -- Add 1 extra cell to avoid placing rooms at edges of map
+            local y = GetRandomInt(mapMinY + MIN_CORRIDOR_WIDTH, mapMaxY - room.height - MIN_CORRIDOR_WIDTH)
             if (isRoomPlaceable(room, x, y)) then
                 return placeRoom(room, x, y)
             end
@@ -221,6 +221,9 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     end
 
     Utils.onGameStart(Utils.pcall(function()
+        if true then
+            return
+        end
         CameraSetupApplyForceDuration(gg_cam_Camera_001, true, 3.0)
         print("invoke generation")
         parseRoomTemplates()
@@ -235,4 +238,18 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         TriggerExecute(trigger)
     end))
 
+    local function CreateDungeon(seed)
+        SetRandomSeed(seed)
+        --print("invoke generation")
+        parseRoomTemplates()
+        --print("rooms read")
+        placeRooms()
+        --print("rooms placed")
+        ConnectRooms(map, rooms, startRoom, bossRoom, farthestRoomFromStart)
+        CreateWalls(map)
+
+        return startRoom.cells[startRoom.width // 2][startRoom.height // 2]
+    end
+
+    exportDefault(CreateDungeon)
 end)
