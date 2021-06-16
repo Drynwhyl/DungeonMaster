@@ -4,18 +4,24 @@ WM("DungeonGenerator", function(import, export, exportDefault)
     local CreateAutotable = import "CreateAutotable"
     local ConnectRooms = import "ConnectRooms"
     local CreateWalls = import "CreateWalls"
+    local CreateCreeps = import "CreateCreeps"
 
     local SHAPE_CIRCLE = 0
     local SHAPE_SQUARE = 1
 
     local RANDOM_VARIATION = -1
-    local ROOM_PLACEMENT_ATTEMPTS = 10
+    local ROOM_PLACEMENT_ATTEMPTS = 200
     local MIN_CORRIDOR_WIDTH = 5
-    local ROOM_NUMBER = 10
+    local ROOM_NUMBER = 100
 
     local roomTemplateRects = {
         gg_rct_Region_000,
         gg_rct_Region_001,
+        gg_rct_Room000,
+        gg_rct_Room001,
+        gg_rct_Room002,
+        gg_rct_Room003,
+        gg_rct_Room004,
     }
 
     local startRoomTemplateRect = gg_rct_StartRoom_001
@@ -35,12 +41,13 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local minX = GetRectMinX(rect)
         local minY = GetRectMinY(rect)
         local room = { width = width, height = height, cells = CreateAutotable(1) }
+        print("wh", width, height)
         for i = 0, width do
             for j = 0, height do
                 room.cells[i][j] = GetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH);
-                if (room.cells[i][j] == TILE_EMPTY) then
-                    print("EMPTY!")
-                end
+                --if (room.cells[i][j] == TILE_EMPTY) then
+                --    print("EMPTY!")
+                --end
                 SetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
             end
         end
@@ -57,8 +64,8 @@ WM("DungeonGenerator", function(import, export, exportDefault)
 
     local function allNearestCellsAreEmpty(x, y, size)
         local halfsize = size / 2
-        for i = x - size, x + size - 1 do
-            for j = y - size, y + size - 1 do
+        for i = x - size, x + size do
+            for j = y - size, y + size do
                 if (GetTerrainType(i * bj_CELLWIDTH, j * bj_CELLWIDTH) ~= TILE_EMPTY) then
                     return false
                 end
@@ -195,7 +202,7 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         local startRoomDistance = 0
         --table.insert(rooms, bossRoom)
 
-        for i = 1, ROOM_NUMBER do
+        for i = 1, 9999 do --ROOM_NUMBER do
             local roomTemplate = roomTemplates[GetRandomInt(1, #roomTemplates)]
             local randomAngle = GetRandomInt(0, 3) * 90;
             print("random angle", randomAngle)
@@ -211,6 +218,8 @@ WM("DungeonGenerator", function(import, export, exportDefault)
                 end
                 table.insert(rooms, placedRoom)
                 print("placed room number " .. i)
+            else
+                break
             end
         end
 
@@ -248,7 +257,9 @@ WM("DungeonGenerator", function(import, export, exportDefault)
         ConnectRooms(map, rooms, startRoom, bossRoom, farthestRoomFromStart)
         CreateWalls(map)
 
-        return startRoom.cells[startRoom.width // 2][startRoom.height // 2]
+        CreateCreeps(map, rooms, farthestRoomFromStart, bossRoom)
+
+        return { start = startRoom.cells[startRoom.width // 2][startRoom.height // 2] }
     end
 
     exportDefault(CreateDungeon)

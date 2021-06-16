@@ -175,7 +175,6 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local found = false
         while not graph:empty() do
             local current = graph:pop()
-
             if current == goal then
                 print("FOUND!")
                 found = true
@@ -184,7 +183,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
 
             for _, next in pairs(current.neighbours) do
                 if (counter % 1000 == 0) then
-                    TriggerSleepAction(0)
+                    --TriggerSleepAction(0)
                     print("node processed: ", counter)
                 end
                 counter = counter + 1
@@ -342,8 +341,10 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local hallwayCount = 0
         local nodes = createGraph(map)
 
-        local _, startRoomDoor = next(getRoomDoors(startRoom))
-        local _, bossRoomDoor = next(getRoomDoors(bossRoom))
+        startRoom.doors = getRoomDoors(startRoom)
+        bossRoom.doors = getRoomDoors(bossRoom)
+        local _, startRoomDoor = next(startRoom.doors)
+        local _, bossRoomDoor = next(bossRoom.doors)
         print(startRoomDoor, bossRoomDoor)
 
         if not findPath(nodes, map, startRoomDoor, bossRoomDoor) then
@@ -405,6 +406,7 @@ WM("ConnectRooms", function(import, export, exportDefault)
         local verticalDoor = FourCC("ITg3")
         local center = getDoorCenter(bossRoomDoor)
         local gate = CreateDestructable(bossRoomDoor.horizontal and horizontalDoor or verticalDoor, center.x, center.y, 270.0, 1.0, -1)
+        bossRoomDoor.gate = gate
         SetDestructableInvulnerable(gate, true)
 
         TriggerRegisterEnterRegion(CreateTrigger(), footSwitchRegion, Filter(function()
