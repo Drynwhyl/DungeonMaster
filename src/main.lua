@@ -1,0 +1,5 @@
+require('InitWaygates')
+require('HeroPick')
+require('Cheats')
+require('TestUI')
+local Utils = require('Utils')

@@ -1,6 +1,5 @@
-WM('TestUI', function(import, export, exportDefault)
 
-    local Utils = import 'Utils'
+    local Utils = require 'Utils'
 
     Utils.onGameStart(Utils.pcall(function()
         --local unit = CreateUnit(Player(0), FourCC('Hpal'), 0, 0, 0)
@@ -33,4 +32,4 @@ WM('TestUI', function(import, export, exportDefault)
         --TriggerExecute(t)
 
     end))
-end)
+

@@ -1,2 +1,6 @@
-.idea
-DungeonMaster.iml
+/*
+!maps
+!src
+!.gitignore
+!build.lua
+/maps/

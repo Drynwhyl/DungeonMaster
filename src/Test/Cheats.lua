@@ -1,5 +1,4 @@
-WM("Cheats", function(import, export, exportDefault)
-    local Utils = import "Utils"
+    local Utils = require "Utils"
 
     Utils.onGameStart(function()
         --SetDayNightModels("", "")
@@ -11,4 +10,4 @@ WM("Cheats", function(import, export, exportDefault)
         --SetRandomSeed(534435)
         CameraSetupApply(gg_cam_Camera_001)
     end)
-end)
+
