@@ -35,21 +35,6 @@ local roomTemplates = {}
 local rooms = {}
 local map = gg_rct_Dungeon --GetPlayableMapRect()
 
-local function init()
-    startRoomTemplateRect = gg_rct_StartRoom_001
-    bossRoomTemplateRect = gg_rct_BossRoom_001
-    map = gg_rct_Dungeon --GetPlayableMapRect()
-    roomTemplateRects = {
-        gg_rct_Region_000,
-        gg_rct_Region_001,
-        gg_rct_Room000,
-        gg_rct_Room001,
-        gg_rct_Room002,
-        gg_rct_Room003,
-        gg_rct_Room004,
-    }
-end
-
 local function parseRoomTemplate(rect)
     local width = GetRectWidthBJ(rect) / bj_CELLWIDTH
     local height = GetRectHeightBJ(rect) / bj_CELLWIDTH
@@ -246,7 +231,6 @@ local function placeRooms()
 end
 
 Utils.onGameStart(Utils.pcall(function()
-    init()
     if true then
         return
     end

@@ -10,6 +10,8 @@ local UNIT_ID_WAYGATE = FourCC("nwgt")
 
 local HALLWAY_CREEPS_PER_CELL = 0.03
 
+local RECT_START = gg_rct_Base
+
 local function getRoomCenter(room)
     local center = room.cells[room.width // 2][room.height // 2]
     return Location(center.x, center.y)
@@ -26,7 +28,6 @@ local function getDoorCenter(door)
 end
 
 local function CreateCreeps(dungeonRect, dungeonRooms, leverRoom, bossRoom)
-    local RECT_START = gg_rct_Base
     local hallwayCells = {}
     for x = GetRectMinX(dungeonRect), GetRectMaxX(dungeonRect), bj_CELLWIDTH do
         for y = GetRectMinY(dungeonRect), GetRectMaxY(dungeonRect), bj_CELLWIDTH do

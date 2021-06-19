@@ -43,6 +43,8 @@ do
     local actions = {}
     TriggerRegisterTimerEvent(trigger, 0, false)
 
+    ---@param func function
+    ---@return void
     function Utils.onGameStart(func)
         table.insert(actions, TriggerAddAction(trigger, func))
     end
