@@ -1,11 +1,11 @@
-require 'TerrainTypeCodes'
+require "TerrainTypeCodes"
 
-local Utils = require 'Utils'
-local Filters = require 'Filters'
+local Utils = require "Utils"
+local Filters = require "Filters"
 
-local UNIT_ID_ZOMBIE = FourCC('ndmu')
-local UNIT_ID_BOSS_1 = FourCC('nfod')
-local UNIT_ID_GUARD_1 = FourCC('nnwq')
+local UNIT_ID_ZOMBIE = FourCC("ndmu")
+local UNIT_ID_BOSS_1 = FourCC("nfod")
+local UNIT_ID_GUARD_1 = FourCC("nnwq")
 local UNIT_ID_WAYGATE = FourCC("nwgt")
 
 local HALLWAY_CREEPS_PER_CELL = 0.03

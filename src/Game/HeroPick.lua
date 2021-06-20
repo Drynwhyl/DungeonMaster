@@ -1,7 +1,7 @@
-local Utils = require 'Utils'
+local Utils = require "Utils"
 
-local UNIT_ID_HERO_PICKER = FourCC('n   ')
-local UNIT_ID_TAVERN = FourCC('ntav')
+local UNIT_ID_HERO_PICKER = FourCC("n   ")
+local UNIT_ID_TAVERN = FourCC("ntav")
 
 local RECT_HERO_PICK = gg_rct_HeroPick
 local RECT_START = gg_rct_Base
@@ -9,7 +9,7 @@ local RECT_START = gg_rct_Base
 Utils.onGameStart(Utils.pcall(function()
     local location = GetRectCenter(RECT_HERO_PICK)
     ForForce(bj_FORCE_ALL_PLAYERS, function()
-        print('unit ', GetLocationY(location), GetLocationY(location), RECT_HERO_PICK == nil)
+        print("unit ", GetLocationY(location), GetLocationY(location), RECT_HERO_PICK == nil)
         local unit = CreateUnitAtLoc(GetEnumPlayer(), UNIT_ID_HERO_PICKER, location, 0)
         --SetCameraTargetController(unit, 0, 0, false)
     end)

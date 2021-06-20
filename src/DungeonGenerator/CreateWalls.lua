@@ -1,27 +1,19 @@
-require 'TerrainTypeCodes'
+require "TerrainTypeCodes"
 
 local CreateAutotable = require "CreateAutotable"
+local CliffDestructables = require "CliffDestructables"
+local Utils = require "Utils"
+
 local WALL_Z = 60.0
 local PATH_BLOCK_ID = FourCC("Ytlc")
 
-local WALLS = {
-    aaac = FourCC("B001"),
-    aaca = FourCC("B005"),
-    aacc = FourCC("B007"),
-    acaa = FourCC("B002"),
-    acac = FourCC("B003"),
-    acca = FourCC("B004"),
-    accc = FourCC("B00A"),
-    caaa = FourCC("B006"),
-    caac = FourCC("B008"),
-    caca = FourCC("B00B"),
-    cacc = FourCC("B000"),
-    ccaa = FourCC("B009"),
-    ccac = FourCC("B00C"),
-    ccca = FourCC("B00D"),
-    cccc = FourCC("ZTtw"), -- mark full cell
-    aaaa = FourCC("OTtw"), -- mark empty cell
-}
+local WALLS = CliffDestructables.cityCliffs
+WALLS["cccc"] = { id = FourCC("ZTtw"), variations = 1 }
+WALLS["aaaa"] = { id = FourCC("OTtw"), variations = 1 }
+WALLS["acac"].variations = 1
+WALLS["caca"].variations = 1
+
+local RUNE_BRICKS = CliffDestructables.tileIcecrownRuneBricks
 
 local function findHallwayCell(map)
     for i = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
@@ -91,7 +83,14 @@ local function checkDirection(direction, current, visited)
     return nil
 end
 
-local function placeCliff(x, y, visitedWalls)
+local function getRandomCliffVariation(cliffData)
+    if cliffData.name == "acac" or cliffData.name == "caca" then
+        return 2
+    end
+    return math.random(0, cliffData.variations - 1)
+end
+
+local function placeCliff(x, y, visitedWalls, visitedCells)
     local cliff = {
         { "a", "a", "a", "a" },
         { "a", "c", "c", "a" },
@@ -137,51 +136,48 @@ local function placeCliff(x, y, visitedWalls)
         cliff[4][4] = "c"
     end
 
-    function repeats(str, char)
-        local _, n = str:gsub(char, "")
-        return n
-    end
+    local cellUpLeft = WALLS[cliff[2][1] .. cliff[1][1] .. cliff[1][2] .. cliff[2][2]]
+    local cellDownLeft = WALLS[cliff[4][1] .. cliff[3][1] .. cliff[3][2] .. cliff[4][2]]
+    local cellUpRight = WALLS[cliff[2][3] .. cliff[1][3] .. cliff[1][4] .. cliff[2][4]]
+    local cellDownRight = WALLS[cliff[4][3] .. cliff[3][3] .. cliff[3][4] .. cliff[4][4]]
 
-    local strUpLeft = cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1];
-    local strDownLeft = cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]
-    local strUpRight = cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]
-    local strDownRight = cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]
+    local varUpLeft = getRandomCliffVariation(cellUpLeft)
+    local varDownLeft = getRandomCliffVariation(cellDownLeft)
+    local varUpRight = getRandomCliffVariation(cellUpRight)
+    local varDownRight = getRandomCliffVariation(cellDownRight)
 
-    local varUpLeft = GetRandomInt(0, repeats(strUpLeft, "c"))
-    local varDownLeft = GetRandomInt(0, repeats(strDownLeft, "c"))
-    local varUpRight = GetRandomInt(0, repeats(strUpRight, "c"))
-    local varDownRight = GetRandomInt(0, repeats(strDownRight, "c"))
-
-    local cellUpLeft = WALLS[cliff[1][1] .. cliff[1][2] .. cliff[2][2] .. cliff[2][1]]
-    local cellDownLeft = WALLS[cliff[3][1] .. cliff[3][2] .. cliff[4][2] .. cliff[4][1]]
-    local cellUpRight = WALLS[cliff[1][3] .. cliff[1][4] .. cliff[2][4] .. cliff[2][3]]
-    local cellDownRight = WALLS[cliff[3][3] .. cliff[3][4] .. cliff[4][4] .. cliff[4][3]]
 
     if not visitedWalls[x - bj_CELLWIDTH][y] then
-        visitedWalls[x - bj_CELLWIDTH][y] = CreateDestructableZ(cellUpLeft, x - bj_CELLWIDTH, y, WALL_Z, 270.0, 1.0, varUpLeft)
+        visitedWalls[x - bj_CELLWIDTH][y] = CreateDestructableZ(cellUpLeft.id, x, y, WALL_Z, 0.0, 1.0, varUpLeft)
     end
     if not visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] then
-        visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownLeft, x - bj_CELLWIDTH, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, varDownLeft)
+        visitedWalls[x - bj_CELLWIDTH][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownLeft.id, x, y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, varDownLeft)
     end
     if not visitedWalls[x][y] then
-        visitedWalls[x][y] = CreateDestructableZ(cellUpRight, x, y, WALL_Z, 270.0, 1.0, varUpRight)
+        visitedWalls[x][y] = CreateDestructableZ(cellUpRight.id, x + bj_CELLWIDTH, y, WALL_Z, 0.0, 1.0, varUpRight)
     end
     if not visitedWalls[x][y - bj_CELLWIDTH] then
         BlzGetItemIntegerField()
-        visitedWalls[x][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownRight, x, y - bj_CELLWIDTH, WALL_Z, 270.0, 1.0, varDownRight)
+        visitedWalls[x][y - bj_CELLWIDTH] = CreateDestructableZ(cellDownRight.id, x + bj_CELLWIDTH, y - bj_CELLWIDTH, WALL_Z, 0.0, 1.0, varDownRight)
     end
 
     CreateDestructable(PATH_BLOCK_ID, x, y, 270.0, 1.0, 0)
+
+    table.insert(visitedCells, { x = x, y = y })
 end
 
 local function CreateWalls(map)
     local visitedWalls = CreateAutotable(1)
+    local visitedCells = {}
     for x = GetRectMinX(map), GetRectMaxX(map), bj_CELLWIDTH do
         for y = GetRectMinY(map), GetRectMaxY(map), bj_CELLWIDTH do
             if GetTerrainType(x, y) == TILE_WALL then
-                placeCliff(x, y, visitedWalls)
+                placeCliff(x, y, visitedWalls, visitedCells)
             end
         end
+    end
+    for _, cell in ipairs(visitedCells) do
+        SetTerrainType(cell.x, cell.y, TILE_WALL, -1, 2, 1)
     end
 end
 

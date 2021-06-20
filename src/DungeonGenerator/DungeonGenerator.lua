@@ -1,4 +1,4 @@
-require 'TerrainTypeCodes'
+require "TerrainTypeCodes"
 
 local Utils = require "Utils"
 local CreateAutotable = require "CreateAutotable"
@@ -45,9 +45,6 @@ local function parseRoomTemplate(rect)
     for i = 0, width do
         for j = 0, height do
             room.cells[i][j] = GetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH);
-            --if (room.cells[i][j] == TILE_EMPTY) then
-            --    print("EMPTY!")
-            --end
             SetTerrainType(minX + i * bj_CELLWIDTH, minY + j * bj_CELLWIDTH, TILE_EMPTY, RANDOM_VARIATION, 1, SHAPE_CIRCLE)
         end
     end
@@ -257,7 +254,6 @@ local function CreateDungeon(seed)
     --print("rooms placed")
     ConnectRooms(map, rooms, startRoom, bossRoom, farthestRoomFromStart)
     CreateWalls(map)
-
     CreateCreeps(map, rooms, farthestRoomFromStart, bossRoom)
 
     return { start = startRoom.cells[startRoom.width // 2][startRoom.height // 2] }

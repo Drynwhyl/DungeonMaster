@@ -1,8 +1,10 @@
-local Utils = require('Utils')
+local Utils = require("Utils")
 
 function InitModules()
-    require('InitWaygates')
-    require('HeroPick')
-    require('Cheats')
-    require('TestUI')
+    require("CliffDestructables")
+    require("InitWaygates")
+    require("HeroPick")
+    require("Cheats")
+    require("TestUI")
+    require("randomlua")
 end

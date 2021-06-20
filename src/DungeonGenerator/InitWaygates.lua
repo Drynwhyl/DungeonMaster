@@ -1,9 +1,9 @@
-require 'TerrainTypeCodes'
+require "TerrainTypeCodes"
 
 local Utils = require "Utils"
 local CreateDungeon = require "DungeonGenerator"
 local Dialog = require "Dialog"
-local Filters = require 'Filters'
+local Filters = require "Filters"
 
 local WAYGATE_UNIT_ID = FourCC("nwgt")
 
@@ -17,7 +17,7 @@ local function createDungeonCallback()
     local start = waygate.dungeon.start
     WaygateSetDestination(waygate.unit, start.x, start.y)
     WaygateActivate(waygate.unit, true)
-    print('DUNGEON SEED:', seed)
+    print("DUNGEON SEED:", seed)
 end
 
 local function destroyDungeonCallback()
@@ -30,24 +30,24 @@ end
 Utils.onGameStart(Utils.pcall(function()
     local createDialogData = {
         {
-            text = 'Создать подземелье',
-            hotkey = string.byte('A'),
+            text = "Создать подземелье",
+            hotkey = string.byte("A"),
             callback = createDungeonCallback
         },
         {
-            text = 'Отмена',
+            text = "Отмена",
             hotkey = 27,
             callback = nil
         },
     }
     local removeDialogData = {
         {
-            text = 'Удалить подземелье',
-            hotkey = string.byte('A'),
+            text = "Удалить подземелье",
+            hotkey = string.byte("A"),
             callback = destroyDungeonCallback
         },
         {
-            text = 'Отмена',
+            text = "Отмена",
             hotkey = 27,
             callback = nil
         },

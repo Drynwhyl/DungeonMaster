@@ -1,4 +1,4 @@
-require 'TerrainTypeCodes'
+require "TerrainTypeCodes"
 
 local CreateAutotable = require "CreateAutotable"
 local PriorityQueue = require "PriorityQueue"
@@ -239,7 +239,7 @@ local function findPath(nodes, map, startDoor, finishDoor)
                 for j = GetRectMinY(current.rect), GetRectMaxY(current.rect), bj_CELLWIDTH do
                     if GetTerrainType(i, j) == TILE_HALLWAY and cellContainsPathing(i, j, bj_CELLWIDTH, TILE_EMPTY) then
                         -- TODO move wall texture generation outside find pathing function: scan every map cell and do the same algorithm
-                        SetTerrainType(i, j, TILE_WALL, -1, 1, 0)
+                        SetTerrainType(i, j, TILE_WALL, -1, 1, 1)
                     end
                 end
             end
