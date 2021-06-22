@@ -1,9 +1,10 @@
 require "TerrainTypeCodes"
 
 local Utils = require "Utils"
-local CreateDungeon = require "DungeonGenerator"
+local Dungeon = require "Dungeon"
 local Dialog = require "Dialog"
 local Filters = require "Filters"
+local WC3Math = require "WC3Math"
 
 local WAYGATE_UNIT_ID = FourCC("nwgt")
 
@@ -12,17 +13,17 @@ local waygates = {}
 
 local function createDungeonCallback()
     local waygate = playerCurrentWaygate[GetTriggerPlayer()]
-    local seed = GetRandomInt(-2147483648, 2147483647)
-    waygate.dungeon = CreateDungeon(seed)
-    local start = waygate.dungeon.start
-    WaygateSetDestination(waygate.unit, start.x, start.y)
-    WaygateActivate(waygate.unit, true)
-    print("DUNGEON SEED:", seed)
+    waygate.dungeon = Dungeon:new(gg_rct_Dungeon)
+    waygate.dungeon:generate()
+    --local start = waygate.dungeon.start
+    --WaygateSetDestination(waygate.unit, start.x, start.y)
+    --WaygateActivate(waygate.unit, true)
+    print("DUNGEON SEED:", WC3Math.baseN(waygate.dungeon.seed, 91))
 end
 
 local function destroyDungeonCallback()
     local waygate = playerCurrentWaygate[GetTriggerPlayer()]
-    DestroyDungeon(waygate.dungeon)
+    waygate.dungeon:clear()
     waygate.dungeon = nil
     WaygateActivate(waygate.unit, false)
 end
@@ -86,5 +87,4 @@ Utils.onGameStart(Utils.pcall(function()
         end)
 
     end))
-
 end))

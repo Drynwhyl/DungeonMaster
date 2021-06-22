@@ -46,7 +46,7 @@ do
     ---@param func function
     ---@return void
     function Utils.onGameStart(func)
-        table.insert(actions, TriggerAddAction(trigger, func))
+        table.insert(actions, TriggerAddAction(trigger, Utils.pcall(func)))
     end
 
     Utils.doAfter(1, function()
@@ -55,6 +55,22 @@ do
         end
         DestroyTrigger(trigger)
     end)
+end
+
+
+local funcList = {}
+
+---@param func function @Function to call on map initialization
+---@return void
+function Utils.onInit(func)
+    table.insert(funcList, func)
+end
+
+function Utils.init()
+    for _, func in ipairs(funcList) do
+        func()
+    end
+    funcList = {}
 end
 
 function Utils.enumUnits(func, ...)

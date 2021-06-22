@@ -290,6 +290,7 @@ local CliffDestructables = compiletime(function()
         if asciiCurrentChar[4] == asciiEndChar then
             if asciiCurrentChar[3] == asciiEndChar then
                 if asciiCurrentChar[2] == asciiEndChar then
+                    print("ERROR: prefix changed due to to many raw codes")
                     asciiCurrentChar[1] = asciiCurrentChar[1] + 1
                     asciiCurrentChar[2] = asciiStartChar
                 else
@@ -331,7 +332,6 @@ local CliffDestructables = compiletime(function()
             customDestructable:setField("pathTex", "_")
             customDestructable:setField("shadow", "_")
             local cliffKey = string.match(template.fileName, ".+" .. filePrefix .. "([a,b,c]+)")
-            print(cliffKey)
             customDestructable:setField("Name", tostring(namePrefix)  .. " " .. tostring(cliffKey))
             local rawCode = generateRawCode(" ")
             currentMap.objects.destructable:setObject(rawCode, customDestructable)
@@ -340,16 +340,13 @@ local CliffDestructables = compiletime(function()
         return cliffIDs
     end
 
-    local cityCliffs = createCliffDestructable("City Cliff", "cliffs", "replaceabletextures\\cliff\\cliff0.blp", cityCliffFilenames)
-    local regularCliffs = createCliffDestructable("Regular Cliff", "cliffs", "replaceabletextures\\cliff\\cliff1.blp", regularCliffFilenames)
-    local tileIcecrownTiledBricks = createCliffDestructable("Tiles 4x4", "tile", "TerrainArt\\IceCrown\\Ice_TiledBricks.blp", tile4x4Filenames)
-    local tileIcecrownRuneBricks = createCliffDestructable("Tiles 4x8", "tile", "TerrainArt\\Icecrown\\Ice_RuneBricks.blp", tile4x8Filenames)
-
     return {
-        cityCliffs = cityCliffs,
-        regularCliffs = regularCliffs,
-        tileIcecrownTiledBricks = tileIcecrownTiledBricks,
-        tileIcecrownRuneBricks = tileIcecrownRuneBricks
+        cityCliffs = createCliffDestructable("City Cliff", "cliffs", "replaceabletextures\\cliff\\cliff0.blp", cityCliffFilenames),
+        regularCliffs = createCliffDestructable("Regular Cliff", "cliffs", "replaceabletextures\\cliff\\cliff1.blp", regularCliffFilenames),
+        tileIcecrownRuneBricks = createCliffDestructable("Tile Rune Bricks", "tile", "TerrainArt\\Icecrown\\Ice_RuneBricks.blp", tile4x8Filenames),
+        tileIcecrownTiledBricks = createCliffDestructable("Tile Tiled Bricks", "tile", "TerrainArt\\IceCrown\\Ice_TiledBricks.blp", tile4x4Filenames),
+        tileIcecrownBlackBricks = createCliffDestructable("Tile Black Bricks", "tile", "TerrainArt\\Icecrown\\Ice_BlackBricks.blp", tile4x4Filenames),
+        tileIcecrownBlackSquares = createCliffDestructable("Tile Black Squares", "tile", "TerrainArt\\Icecrown\\Ice_BlackSquares.blp", tile4x4Filenames),
     }
 end)
 
