@@ -28,8 +28,8 @@ Utils.onGameStart(function()
     for type, rects in pairs(roomTemplateRects) do
         RoomTemplateDefinitions[type] = {}
         RoomTemplateDefinitions[type].roomTemplates = RoomTemplate:batchParse(rects.roomTemplateRects)
-        RoomTemplateDefinitions[type].bossRoomTemplates = RoomTemplate:batchParse(rects.startRoomTemplateRects)
-        RoomTemplateDefinitions[type].startRoomTemplates = RoomTemplate:batchParse(rects.bossRoomTemplateRects)
+        RoomTemplateDefinitions[type].startRoomTemplates = RoomTemplate:batchParse(rects.startRoomTemplateRects)
+        RoomTemplateDefinitions[type].bossRoomTemplates = RoomTemplate:batchParse(rects.bossRoomTemplateRects)
         RoomTemplateDefinitions[type].leverRoomTemplates = RoomTemplateDefinitions[type].roomTemplates
     end
     print("parsing room templates end")

@@ -5,19 +5,21 @@ local Dungeon = require "Dungeon"
 local Dialog = require "Dialog"
 local Filters = require "Filters"
 local WC3Math = require "WC3Math"
+local CreateDungeonDialog = require "CreateDungeonDialog"
 
 local WAYGATE_UNIT_ID = FourCC("nwgt")
 
 local playerCurrentWaygate = {}
+---@field dungeon Dungeon
 local waygates = {}
 
 local function createDungeonCallback()
     local waygate = playerCurrentWaygate[GetTriggerPlayer()]
     waygate.dungeon = Dungeon:new(gg_rct_Dungeon)
     waygate.dungeon:generate()
-    --local start = waygate.dungeon.start
-    --WaygateSetDestination(waygate.unit, start.x, start.y)
-    --WaygateActivate(waygate.unit, true)
+    local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
+    WaygateSetDestination(waygate.unit, startX, startY)
+    WaygateActivate(waygate.unit, true)
     print("DUNGEON SEED:", WC3Math.baseN(waygate.dungeon.seed, 91))
 end
 
@@ -28,7 +30,24 @@ local function destroyDungeonCallback()
     WaygateActivate(waygate.unit, false)
 end
 
+---@param createDungeonDialog CreateDungeonDialog
+---@param player player
+local function createDungeonHandler(createDungeonDialog, player)
+    local waygate = playerCurrentWaygate[player]
+    if createDungeonDialog.playerData[player].loadMode == false then
+        createDungeonDialog:close(player)
+        waygate.dungeon = Dungeon:new(gg_rct_Dungeon)
+        waygate.dungeon:generate()
+        local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
+        WaygateSetDestination(waygate.unit, startX, startY)
+        WaygateActivate(waygate.unit, true)
+        print("DUNGEON SEED:", WC3Math.baseN(waygate.dungeon.seed, 91))
+    end
+end
+
 Utils.onGameStart(Utils.pcall(function()
+    local createDungeonDialog = CreateDungeonDialog:new(createDungeonHandler)
+
     local createDialogData = {
         {
             text = "Создать подземелье",
@@ -77,7 +96,8 @@ Utils.onGameStart(Utils.pcall(function()
             if GetTriggerEventId() == EVENT_GAME_ENTER_REGION then
                 playerCurrentWaygate[player] = waygate
                 if waygate.dungeon == nil then
-                    DialogDisplay(player, generateDungeonDialog, true)
+                    createDungeonDialog:open(player)
+                    --DialogDisplay(player, generateDungeonDialog, true)
                 else
                     DialogDisplay(player, destroyDungeonDialog, true)
                 end

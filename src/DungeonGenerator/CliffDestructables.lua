@@ -307,7 +307,7 @@ local CliffDestructables = compiletime(function()
         return result
     end
 
-    local function createCliffDestructable(namePrefix, filePrefix, texture, cliffFilenames)
+    local function createCliffDestructable(config, namePrefix, filePrefix, texture, cliffFilenames)
         local cliffTemplates = {}
         for _, cliffFilename in ipairs(cliffFilenames) do
             local cliffFilenameNoSuffix = string.match(cliffFilename, "(.+" .. filePrefix .. "[abc]+)%d+")
@@ -321,16 +321,12 @@ local CliffDestructables = compiletime(function()
         for key in pairs(cliffTemplates) do
             local template = cliffTemplates[key]
             local customDestructable = currentMap.objects.destructable["CTtr"]:clone()
-            customDestructable:setField("fixedRot", -1)
-            customDestructable:setField("fogVis", 1)
+            for fieldName, fieldValue in pairs(config) do
+                customDestructable:setField(fieldName, fieldValue)
+            end
             customDestructable:setField("file", tostring(template.fileName) .. tostring(template.variations == 1 and "0.mdx" or ""))
-            customDestructable:setField("lightweight", 0)
             customDestructable:setField("numVar", template.variations)
             customDestructable:setField("texFile", texture)
-            customDestructable:setField("texID", 11)
-            customDestructable:setField("cliffHeight", 2)
-            customDestructable:setField("pathTex", "_")
-            customDestructable:setField("shadow", "_")
             local cliffKey = string.match(template.fileName, ".+" .. filePrefix .. "([a,b,c]+)")
             customDestructable:setField("Name", tostring(namePrefix)  .. " " .. tostring(cliffKey))
             local rawCode = generateRawCode(" ")
@@ -339,14 +335,36 @@ local CliffDestructables = compiletime(function()
         end
         return cliffIDs
     end
+    
+    local cliffConfig = {
+        ["fixedRot"] = -1,
+        ["fogVis"] = 1,
+        ["lightweight"] = 0,
+        ["texID"] = 11,
+        ["cliffHeight"] = 2,
+        ["pathTex"] = "_",
+        ["shadow"] = "_",
+    }
+
+    local tileConfig = {
+        ["fixedRot"] = -1,
+        ["occH"] = 0,
+        ["fogVis"] = 1,
+        ["lightweight"] = 0,
+        ["texID"] = 11,
+        ["cliffHeight"] = 0,
+        ["pathTex"] = "_",
+        ["shadow"] = "_",
+        ["walkable"] = 1,
+    }
 
     return {
-        cityCliffs = createCliffDestructable("City Cliff", "cliffs", "replaceabletextures\\cliff\\cliff0.blp", cityCliffFilenames),
-        regularCliffs = createCliffDestructable("Regular Cliff", "cliffs", "replaceabletextures\\cliff\\cliff1.blp", regularCliffFilenames),
-        tileIcecrownRuneBricks = createCliffDestructable("Tile Rune Bricks", "tile", "TerrainArt\\Icecrown\\Ice_RuneBricks.blp", tile4x8Filenames),
-        tileIcecrownTiledBricks = createCliffDestructable("Tile Tiled Bricks", "tile", "TerrainArt\\IceCrown\\Ice_TiledBricks.blp", tile4x4Filenames),
-        tileIcecrownBlackBricks = createCliffDestructable("Tile Black Bricks", "tile", "TerrainArt\\Icecrown\\Ice_BlackBricks.blp", tile4x4Filenames),
-        tileIcecrownBlackSquares = createCliffDestructable("Tile Black Squares", "tile", "TerrainArt\\Icecrown\\Ice_BlackSquares.blp", tile4x4Filenames),
+        cityCliffs = createCliffDestructable(cliffConfig, "City Cliff", "cliffs", "replaceabletextures\\cliff\\cliff0.blp", cityCliffFilenames),
+        regularCliffs = createCliffDestructable(cliffConfig, "Regular Cliff", "cliffs", "replaceabletextures\\cliff\\cliff1.blp", regularCliffFilenames),
+        tileIcecrownRuneBricks = createCliffDestructable(tileConfig, "Tile Rune Bricks", "tile", "TerrainArt\\Icecrown\\Ice_RuneBricks.blp", tile4x8Filenames),
+        tileIcecrownTiledBricks = createCliffDestructable(tileConfig, "Tile Tiled Bricks", "tile", "TerrainArt\\IceCrown\\Ice_TiledBricks.blp", tile4x4Filenames),
+        tileIcecrownBlackBricks = createCliffDestructable(tileConfig, "Tile Black Bricks", "tile", "TerrainArt\\Icecrown\\Ice_BlackBricks.blp", tile4x4Filenames),
+        tileIcecrownBlackSquares = createCliffDestructable(tileConfig, "Tile Black Squares", "tile", "TerrainArt\\Icecrown\\Ice_BlackSquares.blp", tile4x4Filenames),
     }
 end)
 

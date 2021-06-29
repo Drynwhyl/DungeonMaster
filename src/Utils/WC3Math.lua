@@ -4,14 +4,14 @@ function WC3Math.getRectArea(rect)
     return (GetRectMaxX(rect) - GetRectMinX(rect)) * (GetRectMaxY(rect) - GetRectMinY(rect))
 end
 
-function WC3Math.distanceBetweenPoints(ax, ay, bx, by)
-    local dx = bx - ax
-    local dy = by - ay
+function WC3Math.distanceBetweenPoints(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
     return math.sqrt(dx * dx + dy * dy)
 end
 
-function WC3Math.angleBetweenPoints(ax, ay, bx, by)
-    return math.deg(math.atan(by - ay, bx - ax))
+function WC3Math.angleBetweenPoints(x1, y1, x2, y2)
+    return math.deg(math.atan(y2 - y1, x2 - x1))
 end
 
 local floor, insert = math.floor, table.insert
