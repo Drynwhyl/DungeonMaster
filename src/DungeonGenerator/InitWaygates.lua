@@ -15,7 +15,7 @@ local waygates = {}
 
 local function createDungeonCallback()
     local waygate = playerCurrentWaygate[GetTriggerPlayer()]
-    waygate.dungeon = Dungeon:new(gg_rct_Dungeon)
+    waygate.dungeon = Dungeon:new(gg_rct_Dungeon, 1)
     waygate.dungeon:generate()
     local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
     WaygateSetDestination(waygate.unit, startX, startY)
@@ -36,7 +36,7 @@ local function createDungeonHandler(createDungeonDialog, player)
     local waygate = playerCurrentWaygate[player]
     if createDungeonDialog.playerData[player].loadMode == false then
         createDungeonDialog:close(player)
-        waygate.dungeon = Dungeon:new(gg_rct_Dungeon)
+        waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.level)
         waygate.dungeon:generate()
         local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
         WaygateSetDestination(waygate.unit, startX, startY)

@@ -9,6 +9,7 @@ local PriorityQueue = require "PriorityQueue"
 local WC3Math = require "WC3Math"
 local Filters = require "Filters"
 local Utils = require "Utils"
+local CreepTypes = require "CreepTypes"
 
 local ROOM_PLACEMENT_ATTEMPTS = 20
 local MIN_HALLWAY_WIDTH = 5
@@ -43,6 +44,7 @@ local TILES = {
 ---@field public startRoom Room
 ---@field public bossRoom Room
 ---@field public leverRoom Room
+---@field public level number
 local Dungeon = {}
 
 ---@param rect rect
@@ -52,7 +54,7 @@ local Dungeon = {}
 ---@param bossRoomTemplates RoomTemplate[]
 ---@param leverRoomTemplates RoomTemplate[]
 ---@return Dungeon
-function Dungeon:new(rect, seed, roomTemplates, startRoomTemplates, bossRoomTemplates, leverRoomTemplates)
+function Dungeon:new(rect, level, seed, roomTemplates, startRoomTemplates, bossRoomTemplates, leverRoomTemplates)
     seed = seed or os.time()
 
     local instance = {
@@ -60,6 +62,7 @@ function Dungeon:new(rect, seed, roomTemplates, startRoomTemplates, bossRoomTemp
         rooms = {},
         rect = rect,
         seed = seed,
+        level = level,
         roomTemplates = roomTemplates or RoomTemplateDefinitions.common.roomTemplates,
         startRoomTemplates = startRoomTemplates or RoomTemplateDefinitions.common.startRoomTemplates,
         bossRoomTemplates = bossRoomTemplates or RoomTemplateDefinitions.common.bossRoomTemplates,
@@ -397,8 +400,18 @@ function Dungeon:toMapCoords(x, y)
     return GetRectMinX(self.rect) + x * bj_CELLWIDTH, GetRectMinY(self.rect) + y * bj_CELLWIDTH
 end
 
+local function scaleCreep(creep, level)
+    BlzSetUnitIntegerField(creep, UNIT_IF_LEVEL, level)
+    BlzSetUnitMaxHP(creep, BlzGetUnitMaxHP(creep) * level)
+    SetWidgetLife(creep, BlzGetUnitMaxHP(creep))
+    BlzSetUnitBaseDamage(creep, BlzGetUnitBaseDamage(creep, 0) * level - 1,0)
+    BlzSetUnitDiceSides(creep, BlzGetUnitDiceSides(creep, 0) * level,0)
+    BlzSetUnitArmor(creep, BlzGetUnitArmor(creep) * level)
+end
+
 function Dungeon:createCreeps()
-    local UNIT_ID_ZOMBIE = FourCC("ndmu")
+    --local UNIT_ID_ZOMBIE = FourCC("ndmu")
+    local UNIT_ID_ZOMBIE = CreepTypes.tier1[1]
     local UNIT_ID_BOSS_1 = FourCC("nfod")
     local UNIT_ID_GUARD_1 = FourCC("nnwq")
     local UNIT_ID_WAYGATE = FourCC("nwgt")
@@ -423,7 +436,8 @@ function Dungeon:createCreeps()
         local cell = hallwayCells[index]
         local x, y = self:toMapCoords(cell.x, cell.y)
         table.remove(hallwayCells, index)
-        CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), UNIT_ID_ZOMBIE, x, y, math.random(0, 360))
+        local unit = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), UNIT_ID_ZOMBIE, x, y, math.random(0, 360))
+        scaleCreep(unit, self.level)
     end
 
     local guardX, guardY = self:toMapCoords(self.leverRoom:getCenter())
@@ -509,6 +523,8 @@ function Dungeon:renderOnMap()
     --self:createTiles(Autotable:new(1), { TILE_WALL }, WALL_Z + 7)
     print("tiles2 count: ", destCounter - wallsCount)
     print("total count: ", destCounter)
+    self.weatherEffect = AddWeatherEffect(self.rect, FourCC("FDbh"))
+    EnableWeatherEffect(self.weatherEffect, true)
 end
 
 function Dungeon:generate()
@@ -632,6 +648,7 @@ function Dungeon:clear()
     ForGroup(bj_lastCreatedGroup, function()
         RemoveUnit(GetEnumUnit())
     end)
+    RemoveWeatherEffect(self.weatherEffect)
 end
 
 return Dungeon

@@ -57,16 +57,16 @@ end
 
 ---@param player player
 function CreateDungeonDialog:open(player)
+    self.playerData[player].opened = true
     if GetLocalPlayer() == player then
-        self.playerData[player].opened = true
         BlzFrameSetVisible(self.frame, true)
     end
 end
 
 ---@param player player
 function CreateDungeonDialog:close(player)
+    self.playerData[player].opened = false
     if GetLocalPlayer() == player then
-        self.playerData[player].opened = false
         BlzFrameSetVisible(self.frame, false)
     end
 end
@@ -204,7 +204,6 @@ function CreateDungeonDialog:createFrame()
     local createButtonTrigger = CreateTrigger()
     BlzTriggerRegisterFrameEvent(createButtonTrigger, createButton, FRAMEEVENT_CONTROL_CLICK)
     TriggerAddAction(createButtonTrigger, function()
-        print("click")
         self.createHandler(self, GetTriggerPlayer())
     end)
 
