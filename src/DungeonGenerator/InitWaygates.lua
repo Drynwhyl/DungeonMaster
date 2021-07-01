@@ -36,18 +36,28 @@ local function createDungeonHandler(createDungeonDialog, player)
     local waygate = playerCurrentWaygate[player]
     if createDungeonDialog.playerData[player].loadMode == false then
         createDungeonDialog:close(player)
-        waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.level)
+        waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.playerData[player].level)
         waygate.dungeon:generate()
         local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
         WaygateSetDestination(waygate.unit, startX, startY)
         WaygateActivate(waygate.unit, true)
-        print("DUNGEON SEED:", WC3Math.baseN(waygate.dungeon.seed, 91))
+        print("DUNGEON SEED, endoced: ", WC3Math.baseN(waygate.dungeon.seed, 91), "raw:", waygate.dungeon.seed)
+    else
+        local glyph = createDungeonDialog.glyph
+        local seed = WC3Math.decodeBaseN(glyph, 91)
+        createDungeonDialog:close(player)
+        waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.playerData[player].level, seed)
+        waygate.dungeon:generate()
+        local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
+        WaygateSetDestination(waygate.unit, startX, startY)
+        WaygateActivate(waygate.unit, true)
+        print("DUNGEON SEED, endoced: ", WC3Math.baseN(waygate.dungeon.seed, 91), "raw:", waygate.dungeon.seed)
     end
 end
 
 Utils.onGameStart(Utils.pcall(function()
     local createDungeonDialog = CreateDungeonDialog:new(createDungeonHandler)
-
+    print(WC3Math.baseN(1625147818, 91), "\n", WC3Math.baseN(1625147727, 91))
     local createDialogData = {
         {
             text = "Создать подземелье",
@@ -94,6 +104,7 @@ Utils.onGameStart(Utils.pcall(function()
             local unit = GetTriggerUnit()
             local player = GetOwningPlayer(unit)
             if GetTriggerEventId() == EVENT_GAME_ENTER_REGION then
+                IssueImmediateOrder(unit, "stop")
                 playerCurrentWaygate[player] = waygate
                 if waygate.dungeon == nil then
                     createDungeonDialog:open(player)

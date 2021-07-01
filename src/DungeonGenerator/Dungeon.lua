@@ -154,8 +154,7 @@ function Dungeon:placeDestructable(x, y, z, tile, destructables, globalOffsetX, 
     local varUpRight = variationFunc(cellUpRight)
     local varDownRight = variationFunc(cellDownRight)
 
-    local mapX = x * bj_CELLWIDTH + GetRectMinX(self.rect)
-    local mapY = y * bj_CELLWIDTH + GetRectMinY(self.rect)
+    local mapX, mapY = self:toMapCoords(x, y)
     if not visited[x - 1][y] then
         visited[x - 1][y] = true
         CreateDestructableZ(cellUpLeft.id, mapX - 64 + globalOffsetX, mapY + 64 + globalOffsetY, z, 0, 1, varUpLeft)
@@ -237,9 +236,13 @@ local directions = {
     right = { x = 1, y = 0, horizontal = true },
 }
 
-function Dungeon:cellContainsPathing(x, y, pathing)
+function Dungeon:cellContainsPathing(x, y, ...)
+    local pathingSet = {}
+    for _, value in pairs(table.pack(...)) do
+        pathingSet[value] = true
+    end
     for _, dir in pairs(directions) do
-        if self:getCell(x + dir.x, y + dir.y) == pathing then
+        if pathingSet[self:getCell(x + dir.x, y + dir.y)] then
             return true
         end
     end
@@ -255,8 +258,12 @@ function Dungeon:findPath(nodes, startDoor, finishDoor)
     local start = startDoor:findNearestNode(nodes, MIN_HALLWAY_WIDTH)
     local goal = finishDoor:findNearestNode(nodes, MIN_HALLWAY_WIDTH)
 
-    if start == nil or goal == nil then
-        print("ERROR: start/finish nodes are nil!")
+    if start == nil then
+        print("ERROR: start node is nil!")
+        return
+    end
+    if goal == nil then
+        print("ERROR: goal node is nil!")
         return
     end
 
@@ -330,7 +337,7 @@ function Dungeon:findPath(nodes, startDoor, finishDoor)
             self:fillCells(current:getCenterX(), current:getCenterY(), TILE_HALLWAY, 3)
             for i = current.x, current.x + current.width do
                 for j = current.y, current.y + current.height do
-                    if self:getCell(i, j) == TILE_HALLWAY and self:cellContainsPathing(i, j, TILE_EMPTY) then
+                    if self:getCell(i, j) == TILE_HALLWAY and self:cellContainsPathing(i, j, TILE_EMPTY, TILE_UNKNOWN) then
                         -- TODO move wall texture generation outside find pathing function: scan every map cell and do the same algorithm
                         self:setCell(i, j, TILE_WALL)
                     end
@@ -350,8 +357,18 @@ end
 
 function Dungeon:connectRooms()
     local nodes = Node:createGraph(self, MIN_HALLWAY_WIDTH)
-    self:findPath(nodes, self.startRoom.doors[1], self.bossRoom.doors[1])
-    self:findPath(nodes, self.startRoom.doors[1], self.leverRoom.doors[math.random(1, #self.leverRoom.doors)])
+    local startBossFound = self:findPath(nodes, self.startRoom.doors[1], self.bossRoom.doors[1])
+    local startLeverFound = self:findPath(nodes, self.startRoom.doors[1], self.leverRoom.doors[math.random(1, #self.leverRoom.doors)])
+
+    if not startBossFound then
+        print("ERROR! Start to boss path not found!")
+        return
+    end
+
+    if not startLeverFound then
+        print("ERROR! Start to lever path not found!")
+        return
+    end
 
     local allRooms = { self.leverRoom }
     for _, room in pairs(self.rooms) do
@@ -397,7 +414,7 @@ function Dungeon:connectRooms()
 end
 
 function Dungeon:toMapCoords(x, y)
-    return GetRectMinX(self.rect) + x * bj_CELLWIDTH, GetRectMinY(self.rect) + y * bj_CELLWIDTH
+    return GetRectMinX(self.rect) + (x - 1) * bj_CELLWIDTH, GetRectMinY(self.rect) + (y - 1) * bj_CELLWIDTH
 end
 
 local function scaleCreep(creep, level)
@@ -430,8 +447,10 @@ function Dungeon:createCreeps()
         end
     end
 
+
     local hallwayCreepNumber = math.floor(#hallwayCells * HALLWAY_CREEPS_PER_CELL)
-    for _ = 1, hallwayCreepNumber do
+    print("hawllaty cells", #hallwayCells, "creep number", hallwayCreepNumber)
+    for i = 1, hallwayCreepNumber do
         local index = math.random(1, #hallwayCells)
         local cell = hallwayCells[index]
         local x, y = self:toMapCoords(cell.x, cell.y)
@@ -521,10 +540,9 @@ function Dungeon:renderOnMap()
     print("walls count: ", wallsCount)
     --TODO: this causes to many fps drop
     --self:createTiles(Autotable:new(1), { TILE_WALL }, WALL_Z + 7)
-    print("tiles2 count: ", destCounter - wallsCount)
-    print("total count: ", destCounter)
     self.weatherEffect = AddWeatherEffect(self.rect, FourCC("FDbh"))
     EnableWeatherEffect(self.weatherEffect, true)
+    --SetDayNightModels("","")
 end
 
 function Dungeon:generate()
@@ -532,7 +550,9 @@ function Dungeon:generate()
     self:placeRooms()
     self:connectRooms()
     self:renderOnMap()
-    self:createCreeps()
+    Utils.pcall(function()
+        self:createCreeps()
+    end)()
 end
 
 function Dungeon:getWidth()
@@ -582,7 +602,7 @@ function Dungeon:isRoomPlaceable(originX, originY, roomTemplate)
     for x = 1, roomTemplate:getWidth() do
         for y = 1, roomTemplate:getHeight() do
             -- TODO: Replace with cheaper algorithm - just add hallway width to room dimension and iterate over all room cells
-            if not self:cellsAreEmpty(originX + x, originY + y, MIN_HALLWAY_WIDTH) then
+            if not self:cellsAreEmpty(originX + x - 1, originY + y - 1, MIN_HALLWAY_WIDTH) then
                 return false
             end
         end
@@ -638,17 +658,24 @@ end
 
 ---@return void
 function Dungeon:clear()
-    EnumDestructablesInRect(self.rect, nil, function()
+    local newRect = Rect(
+            GetRectMinX(self.rect) - bj_CELLWIDTH * 2,
+            GetRectMinY(self.rect) - bj_CELLWIDTH * 2,
+            GetRectMaxX(self.rect) + bj_CELLWIDTH * 2,
+            GetRectMaxY(self.rect) + bj_CELLWIDTH * 2
+    )
+    EnumDestructablesInRect(newRect, nil, function()
         RemoveDestructable(GetEnumDestructable())
     end)
-    EnumItemsInRect(self.rect, nil, function()
+    EnumItemsInRect(newRect, nil, function()
         RemoveItem(GetEnumItem())
     end)
-    GroupEnumUnitsInRect(bj_lastCreatedGroup, self.rect, nil)
+    GroupEnumUnitsInRect(bj_lastCreatedGroup, newRect, nil)
     ForGroup(bj_lastCreatedGroup, function()
         RemoveUnit(GetEnumUnit())
     end)
     RemoveWeatherEffect(self.weatherEffect)
+    RemoveRect(newRect)
 end
 
 return Dungeon

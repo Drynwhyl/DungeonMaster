@@ -166,7 +166,7 @@ function CreateDungeonDialog:createFrame()
     BlzFrameSetPoint(levelSlider, FRAMEPOINT_TOPLEFT, boxFrame, FRAMEPOINT_TOPLEFT, 0.0375, -0.18)
     -- label
     local levelLabel = BlzCreateFrame("EscMenuMainPanelDialogTextTemplate", newDungeonFrame, 0, 0)
-    BlzFrameSetText(levelLabel, "Dungeon level: 100")
+    BlzFrameSetText(levelLabel, "Dungeon level: " .. 1)
     BlzFrameSetPoint(levelLabel, FRAMEPOINT_TOPLEFT, boxFrame, FRAMEPOINT_TOPLEFT, 0.04, -0.16)
     -- END LEVEL
 

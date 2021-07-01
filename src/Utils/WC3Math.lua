@@ -31,10 +31,25 @@ function WC3Math.baseN(num, base)
     end
     repeat
         local d = (num % base) + 1
-        num = floor(num / base)
+        num = num // base
         insert(t, 1, digits:sub(d, d))
     until num == 0
     return sign .. table.concat(t, "")
+end
+
+---@param numStr string
+---@param base number
+function WC3Math.decodeBaseN(numStr, base)
+    local digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+,-./:;<=>?[\\]^_{|}~"
+    local result = 0
+    local currentPow = 1
+    for i = numStr:len(), 1, -1 do
+        local digit = numStr:sub(i, i)
+        local decimalNumber = digits:find(digit, 1, true) - 1
+        result = result + decimalNumber * currentPow
+        currentPow = currentPow * base
+    end
+    return result
 end
 
 return WC3Math
