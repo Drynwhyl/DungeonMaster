@@ -40,6 +40,7 @@ local TILES = {
 ---@field private startRoomTemplates RoomTemplate[]
 ---@field private bossRoomTemplates RoomTemplate[]
 ---@field private leverRoomTemplates RoomTemplate[]
+---@field private acquireTargetTrigger trigger
 ---@field public rooms Room[]
 ---@field public startRoom Room
 ---@field public bossRoom Room
@@ -77,11 +78,53 @@ function Dungeon:new(rect, level, seed, roomTemplates, startRoomTemplates, bossR
         end
     end
 
+    instance.acquireTargetTrigger = CreateTrigger()
+    instance.acquireTargetAction = TriggerAddAction(instance.acquireTargetTrigger, function()
+        --SetUnitAcquireRange(GetTriggerUnit(), GetUnitDefaultAcquireRange(GetTriggerUnit()))
+    end)
+
     setmetatable(instance, self)
     self.__index = self
     return instance
 end
 
+function Dungeon:generate()
+    math.randomseed(self.seed)
+    self:placeRooms()
+    self:connectRooms()
+    Utils.pcall(function()
+        self:renderOnMap()
+        self:createCreeps()
+    end)()
+end
+
+function Dungeon:clear()
+    local newRect = Rect(
+            GetRectMinX(self.rect) - bj_CELLWIDTH * 2,
+            GetRectMinY(self.rect) - bj_CELLWIDTH * 2,
+            GetRectMaxX(self.rect) + bj_CELLWIDTH * 2,
+            GetRectMaxY(self.rect) + bj_CELLWIDTH * 2
+    )
+
+    for x = GetRectMinX(newRect), GetRectMaxX(newRect), bj_CELLWIDTH do
+        for y = GetRectMinY(newRect), GetRectMaxY(newRect), bj_CELLWIDTH do
+            SetTerrainType(x, y, TILE_EMPTY, -1, 1, 1)
+        end
+    end
+
+    EnumDestructablesInRect(newRect, nil, function()
+        RemoveDestructable(GetEnumDestructable())
+    end)
+    EnumItemsInRect(newRect, nil, function()
+        RemoveItem(GetEnumItem())
+    end)
+    GroupEnumUnitsInRect(bj_lastCreatedGroup, newRect, nil)
+    ForGroup(bj_lastCreatedGroup, function()
+        RemoveUnit(GetEnumUnit())
+    end)
+    RemoveWeatherEffect(self.weatherEffect)
+    RemoveRect(newRect)
+end
 
 local destCounter = 0
 ---@param x number
@@ -210,19 +253,26 @@ function Dungeon:createWalls(visitedCells)
     end
 end
 
-function Dungeon:createTiles(visitedCells, tiles, z)
-    z = z or WALL_Z
-    for _, tile in ipairs(tiles) do
-        local visited = Autotable:new(1)
-        for x = 1, self:getWidth() do
-            for y = 1, self:getHeight() do
-                if self:getCell(x, y) == tile and not visitedCells[x][y] then
-                    self:placeDestructable(x, y, z, tile, TILES[tile], 0, 0, visited)
-                end
-            end
+function Dungeon:createTiles(visitedCells)
+    for x = 1, self:getWidth() do
+        for y = 1, self:getHeight() do
+            local mapX, mapY = self:toMapCoords(x, y)
+            SetTerrainType(mapX, mapY, self:getCell(x, y), -1, 1, 1)
         end
-        z = z + 1
     end
+    -- Disabled because of performance issues
+    --z = z or WALL_Z
+    --for _, tile in ipairs(tiles) do
+    --    local visited = Autotable:new(1)
+    --    for x = 1, self:getWidth() do
+    --        for y = 1, self:getHeight() do
+    --            if self:getCell(x, y) == tile and not visitedCells[x][y] then
+    --                self:placeDestructable(x, y, z, tile, TILES[tile], 0, 0, visited)
+    --            end
+    --        end
+    --    end
+    --    z = z + 1
+    --end
 end
 
 local function heuristic(x1, y1, x2, y2)
@@ -418,46 +468,71 @@ function Dungeon:toMapCoords(x, y)
 end
 
 local function scaleCreep(creep, level)
+    local SCALING_PER_LEVEL = 1.05
+    local scalingExp = SCALING_PER_LEVEL ^ level - 1
+    local scalingLevel = (level - 1) * 0.5
+    print("scale unit to level", level, "scaling", scalingExp)
+
+    local function scaleStat(base)
+        return math.floor(base + base * scalingLevel + base * scalingExp)
+    end
+
     BlzSetUnitIntegerField(creep, UNIT_IF_LEVEL, level)
-    BlzSetUnitMaxHP(creep, BlzGetUnitMaxHP(creep) * level)
+
+    BlzSetUnitMaxHP(creep, scaleStat(BlzGetUnitMaxHP(creep)))
+    local averageDmg = (BlzGetUnitBaseDamage(creep, 0) + BlzGetUnitDiceSides(creep, 0)) / 2
+    local scaledAverageDmg = scaleStat(averageDmg)
+    local basedDmg = scaledAverageDmg // 2
+    local diceSides = scaledAverageDmg - basedDmg
+    BlzSetUnitBaseDamage(creep, basedDmg, 0)
+    BlzSetUnitDiceSides(creep, diceSides, 0)
+    BlzSetUnitArmor(creep, scaleStat(BlzGetUnitArmor(creep)))
+
     SetWidgetLife(creep, BlzGetUnitMaxHP(creep))
-    BlzSetUnitBaseDamage(creep, BlzGetUnitBaseDamage(creep, 0) * level - 1,0)
-    BlzSetUnitDiceSides(creep, BlzGetUnitDiceSides(creep, 0) * level,0)
-    BlzSetUnitArmor(creep, BlzGetUnitArmor(creep) * level)
+end
+
+function Dungeon:placeCreeps(unitID, amountPerCell, cells)
+    local amount = math.floor(#cells * amountPerCell)
+    for _ = 1, amount do
+        local index = math.random(1, #cells)
+        local cell = cells[index]
+        local x, y = self:toMapCoords(cell.x, cell.y)
+        table.remove(cells, index)
+        local unit = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), unitID, x, y, math.random(0, 360))
+        --SetUnitAcquireRange(unit, 100)
+        scaleCreep(unit, self.level)
+        --TriggerRegisterUnitEvent(nil, unit, EVENT_UNIT_ACQUIRED_TARGET)
+    end
 end
 
 function Dungeon:createCreeps()
     --local UNIT_ID_ZOMBIE = FourCC("ndmu")
-    local UNIT_ID_ZOMBIE = CreepTypes.tier1[1]
+    local UNIT_ID_REGULAR = CreepTypes.tier1[1]
+    local UNIT_ID_MAGE = CreepTypes.tier2[1]
     local UNIT_ID_BOSS_1 = FourCC("nfod")
     local UNIT_ID_GUARD_1 = FourCC("nnwq")
     local UNIT_ID_WAYGATE = FourCC("nwgt")
     local DESTRUCTABLE_ID_HORIZONTAL_DOOR = FourCC("ITg1")
     local DESTRUCTABLE_ID_VERTICAL_DOOR = FourCC("ITg3")
     local DESTRUCTABLE_ID_FOOTSWITCH = FourCC("DTfp")
-    local HALLWAY_CREEPS_PER_CELL = 0.03
+    local HALLWAY_CREEPS_PER_CELL = 0.15
     local RECT_START = gg_rct_Base
 
     local hallwayCells = {}
+    local roomCells = {}
     for x = 1, self:getWidth() do
         for y = 1, self:getHeight() do
-            if self:getCell(x, y) == TILE_HALLWAY then
+            local tile = self:getCell(x, y)
+            if tile == TILE_HALLWAY then
                 table.insert(hallwayCells, { x = x, y = y })
+            elseif tile == TILE_FLOOR then
+                table.insert(roomCells, { x = x, y = y })
             end
         end
     end
 
-
-    local hallwayCreepNumber = math.floor(#hallwayCells * HALLWAY_CREEPS_PER_CELL)
-    print("hawllaty cells", #hallwayCells, "creep number", hallwayCreepNumber)
-    for i = 1, hallwayCreepNumber do
-        local index = math.random(1, #hallwayCells)
-        local cell = hallwayCells[index]
-        local x, y = self:toMapCoords(cell.x, cell.y)
-        table.remove(hallwayCells, index)
-        local unit = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), UNIT_ID_ZOMBIE, x, y, math.random(0, 360))
-        scaleCreep(unit, self.level)
-    end
+    self:placeCreeps(UNIT_ID_REGULAR, HALLWAY_CREEPS_PER_CELL, hallwayCells)
+    self:placeCreeps(UNIT_ID_MAGE, 0.08, roomCells)
 
     local guardX, guardY = self:toMapCoords(self.leverRoom:getCenter())
     local guardDoorX, guardDoorY = self:toMapCoords(self.leverRoom.doors[1]:getCenter())
@@ -543,16 +618,6 @@ function Dungeon:renderOnMap()
     self.weatherEffect = AddWeatherEffect(self.rect, FourCC("FDbh"))
     EnableWeatherEffect(self.weatherEffect, true)
     --SetDayNightModels("","")
-end
-
-function Dungeon:generate()
-    math.randomseed(self.seed)
-    self:placeRooms()
-    self:connectRooms()
-    self:renderOnMap()
-    Utils.pcall(function()
-        self:createCreeps()
-    end)()
 end
 
 function Dungeon:getWidth()
@@ -654,28 +719,6 @@ function Dungeon:placeRooms()
             print("room #" .. #self.rooms)
         end
     until room == nil
-end
-
----@return void
-function Dungeon:clear()
-    local newRect = Rect(
-            GetRectMinX(self.rect) - bj_CELLWIDTH * 2,
-            GetRectMinY(self.rect) - bj_CELLWIDTH * 2,
-            GetRectMaxX(self.rect) + bj_CELLWIDTH * 2,
-            GetRectMaxY(self.rect) + bj_CELLWIDTH * 2
-    )
-    EnumDestructablesInRect(newRect, nil, function()
-        RemoveDestructable(GetEnumDestructable())
-    end)
-    EnumItemsInRect(newRect, nil, function()
-        RemoveItem(GetEnumItem())
-    end)
-    GroupEnumUnitsInRect(bj_lastCreatedGroup, newRect, nil)
-    ForGroup(bj_lastCreatedGroup, function()
-        RemoveUnit(GetEnumUnit())
-    end)
-    RemoveWeatherEffect(self.weatherEffect)
-    RemoveRect(newRect)
 end
 
 return Dungeon

@@ -1,3 +1,4 @@
+require "Orders"
 local Utils = require("Utils")
 
 local trigger = CreateTrigger()
@@ -19,4 +20,10 @@ function InitModules()
     require("Cheats")
     require("TestUI")
     require("randomlua")
+    print("require abils start")
+    Utils.pcall(function()
+        require("Abilities")
+    end)()
+    print("require abils end")
+    require("ShowAlliedHeroIcons")
 end

@@ -35,24 +35,18 @@ end
 local function createDungeonHandler(createDungeonDialog, player)
     local waygate = playerCurrentWaygate[player]
     if createDungeonDialog.playerData[player].loadMode == false then
-        createDungeonDialog:close(player)
         waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.playerData[player].level)
-        waygate.dungeon:generate()
-        local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
-        WaygateSetDestination(waygate.unit, startX, startY)
-        WaygateActivate(waygate.unit, true)
-        print("DUNGEON SEED, endoced: ", WC3Math.baseN(waygate.dungeon.seed, 91), "raw:", waygate.dungeon.seed)
     else
-        local glyph = createDungeonDialog.glyph
+        local glyph = createDungeonDialog.playerData[player].glyph
         local seed = WC3Math.decodeBaseN(glyph, 91)
-        createDungeonDialog:close(player)
         waygate.dungeon = Dungeon:new(gg_rct_Dungeon, createDungeonDialog.playerData[player].level, seed)
-        waygate.dungeon:generate()
-        local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
-        WaygateSetDestination(waygate.unit, startX, startY)
-        WaygateActivate(waygate.unit, true)
-        print("DUNGEON SEED, endoced: ", WC3Math.baseN(waygate.dungeon.seed, 91), "raw:", waygate.dungeon.seed)
     end
+    createDungeonDialog:close(player)
+    waygate.dungeon:generate()
+    local startX, startY  = waygate.dungeon:toMapCoords(waygate.dungeon.startRoom:getCenter())
+    WaygateSetDestination(waygate.unit, startX, startY)
+    WaygateActivate(waygate.unit, true)
+    print("DUNGEON SEED, endoced: ", WC3Math.baseN(waygate.dungeon.seed, 91), "raw:", waygate.dungeon.seed)
 end
 
 Utils.onGameStart(Utils.pcall(function()

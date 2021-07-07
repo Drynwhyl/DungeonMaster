@@ -40,20 +40,84 @@ local CreepTypes = compiletime(function()
         return string.unpack(">I4", rawCode)
     end
 
+    local DALARAN_MUTANT_ID = "ndmu"
+    local DEMONOLOGIST_ID = "ners"
+
     local zombieConfig = {
-        ["spd"] = 200,
+        -- Art
+        ["modelScale"] = 1.15,
+        ["shadowX"] = 50,
+        ["shadowY"] = 40,
+        ["shadowH"] = 100,
+        ["shadowW"] = 100,
+
+        -- Combat
+        ["def"] = 1,
+        ["defType"] = "divine",
         ["HP"] = 10,
-        ["dmgplus1"] = 4,
+
+        ["dmgplus1"] = 1,
         ["dice1"] = 1,
-        ["sides1"] = 6,
+        ["sides1"] = 3,
+        ["cool1"] = 1.0,
+
+        -- Movement
+        ["spd"] = 200,
+        ["collision"] = 15,
+
+        --Text
         ["Name"] = "Rotting zombie",
     }
 
-    local zombie = createCreep("ndmu", zombieConfig)
+    local chaosCultistConfig = {
+        -- Art
+        ["file"] = "units\\Sorceror\\ChaosCultist.mdx",
+        ["scale"] = 1.3, -- Selection circle
+        ["modelScale"] = 1.0,
+        ["shadowX"] = 65,
+        ["shadowY"] = 65,
+        ["shadowH"] = 140,
+        ["shadowW"] = 140,
+
+        -- Abilities
+        ["abilList"] = "ACrd",
+        ["auto"] = "ACrd",
+
+        -- Combat
+        ["def"] = 1,
+        ["defType"] = "divine",
+        ["HP"] = 15,
+
+        ["impactZ"] = 80,
+        ["launchZ"] = 100,
+        ["Missileart"] = "Abilities\\Weapons\\FireBallMissile\\FireBallMissile.mdl",
+
+        ["Missilespeed"] = 500,
+        ["MissileHoming"] = 0,
+        ["atkType1"] = "magic",
+        ["dmgplus1"] = 1,
+        ["dice1"] = 1,
+        ["sides1"] = 5,
+        ["cool1"] = 1.1,
+
+        -- Movement
+        ["spd"] = 200,
+        ["collision"] = 20,
+        ["turnRate"] = 3,
+
+        --Text
+        ["Name"] = "Chaos Cultist",
+    }
+
+    local zombie = createCreep(DALARAN_MUTANT_ID, zombieConfig)
+    local chaosCultist = createCreep(DEMONOLOGIST_ID, chaosCultistConfig)
 
     return {
         tier1 = {
             zombie,
+        },
+        tier2 = {
+            chaosCultist,
         }
     }
 end)

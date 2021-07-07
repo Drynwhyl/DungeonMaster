@@ -262,14 +262,14 @@ function CreateDungeonDialog:createFrame()
     BlzTriggerRegisterFrameEvent(levelSliderTrigger, levelSlider, FRAMEEVENT_SLIDER_VALUE_CHANGED)
     TriggerAddAction(levelSliderTrigger, function()
         local newLevelValue = math.floor(BlzGetTriggerFrameValue())
-        self.level = newLevelValue
+        self.playerData[GetTriggerPlayer()].level = newLevelValue
         BlzFrameSetText(levelLabel, "Dungeon level: " .. newLevelValue)
     end)
 
     local editBoxTrigger = CreateTrigger()
     BlzTriggerRegisterFrameEvent(editBoxTrigger, glyphEditBox, FRAMEEVENT_EDITBOX_TEXT_CHANGED)
     TriggerAddAction(editBoxTrigger, function()
-        self.glyph = BlzGetTriggerFrameText()
+        self.playerData[GetTriggerPlayer()].glyph = BlzGetTriggerFrameText()
     end)
 
     -- Because one can close (hide) the box, one also should be able to show it again, this is done with an button that is only visible while the player is in Menu (F10)
