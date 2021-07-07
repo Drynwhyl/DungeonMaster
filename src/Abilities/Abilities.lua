@@ -19,6 +19,12 @@ local AbilityData = {}
 ---type AbilityData[]
 local ABILITIES = {}
 
+local function SilentDestroyEffect(effect)
+    BlzSetSpecialEffectX(effect, GetRectCenterX(gg_rct_HeroPick))
+    BlzSetSpecialEffectY(effect, GetRectCenterY(gg_rct_HeroPick))
+    DestroyEffect(effect)
+end
+
 -- -------------------------------------------------------------------------
 -- VAMPIRE ABILITIES
 -- -------------------------------------------------------------------------
@@ -26,6 +32,7 @@ local ABILITIES = {}
 local ABILITY_ID_TRANSFUSION = FourCC("A002")
 local ABILITY_ID_TIDES_OF_BLOOD = FourCC("A003")
 local ABILITY_ID_BLOOD_PLAGUE = FourCC("A004")
+local ABILITY_ID_BLOOD_MINISTRY = FourCC("A005")
 local BUFF_ID_BLOOD_PLAGUE = FourCC("B000")
 
 ABILITIES.TRANSFUSION = {
@@ -97,17 +104,9 @@ ABILITIES.BLOOD_PLAGUE = {
     finishHandler = function(castData)
         local caster = castData.caster
         local target = castData.target
-        local group = CreateGroup()
-        local aoe = BlzGetAbilityRealLevelField(castData.ability, ABILITY_RLF_AREA_OF_EFFECT, GetUnitAbilityLevel(caster, castData.abilityId) - 1)
-        --DestroyEffect(AddSpecialEffect("sfx\\BloodCloud.mdx", target.x, target.y))
-        GroupEnumUnitsInRange(group, target.x, target.y, aoe, Filter(function()
-            local unit = GetFilterUnit()
-            return IsUnitEnemy(unit, GetOwningPlayer(caster)) and not UnitHasBuffBJ(unit, BUFF_ID_BLOOD_PLAGUE) and UnitAlive(unit)
-        end))
-        print("group", BlzGroupGetSize(group))
-        ForGroup(group, Utils.pcall(function()
-            CastSystem.castAbility(GetOwningPlayer(caster), FourCC("A   "), ORDER_cripple, GetEnumUnit())
-        end))
+        Missiles.createHoming("sfx\\BloodCloud.mdx", caster, target,900, 0, function()
+            CastSystem.castAbility(GetOwningPlayer(caster), ABILITIES.BLOOD_PLAGUE_DEBUFF.abilityId, ORDER_cripple, target)
+        end)
     end
 }
 
@@ -119,6 +118,78 @@ ABILITIES.BLOOD_PLAGUE_DEBUFF = {
         table.insert(bloodPlagueData,{ target = target, caster = PlayerHero[GetOwningPlayer(caster)] })
     end
 }
+
+local bloodPlagueDeathTrig = CreateTrigger()
+TriggerRegisterAnyUnitEventBJ(bloodPlagueDeathTrig, EVENT_PLAYER_UNIT_DEATH)
+TriggerAddAction(bloodPlagueDeathTrig, function()
+    local unit = GetDyingUnit()
+
+    local caster
+    for _, data in pairs(bloodPlagueData) do
+        if data.target == unit then
+            caster = data.caster
+        end
+    end
+
+    if caster == nil then
+        return
+    end
+
+    DestroyEffect(AddSpecialEffect("Objects\\Spawnmodels\\Human\\HumanLargeDeathExplode\\HumanLargeDeathExplode.mdl", GetUnitX(unit), GetUnitY(unit)))
+    local fx = AddSpecialEffect("sfx\\BloodCloud.mdx", GetUnitX(unit), GetUnitY(unit))
+    TimerStart(CreateTimer(), 0.1, false, function()
+        DestroyTimer(GetExpiredTimer())
+        DestroyEffect(fx)
+    end)
+    local group = CreateGroup()
+    GroupEnumUnitsInRange(group, GetUnitX(unit), GetUnitY(unit), 300, Filter(function()
+        local filterUnit = GetFilterUnit()
+        return IsUnitEnemy(filterUnit, GetOwningPlayer(caster)) and UnitAlive(filterUnit)
+    end))
+    ForGroup(group, function()
+        local enumUnit = GetEnumUnit()
+        --UnitDamageTarget(caster, enumUnit, 10, false, true, ATTACK_TYPE_MAGIC, DAMAGE_TYPE_MAGIC, WEAPON_TYPE_WHOKNOWS)
+        CastSystem.castAbility(GetOwningPlayer(caster), ABILITIES.BLOOD_PLAGUE_DEBUFF.abilityId, ORDER_cripple, enumUnit)
+    end)
+end)
+
+ABILITIES.BLOOD_MINISTRY = {
+    abilityId = ABILITY_ID_BLOOD_MINISTRY,
+    animation = 8,
+    animationTime = 2.0,
+    animationDamagePoint = 2.0,
+    animationBackswingPoint = 2.0,
+    animationMode = CastSystem.ANIMATION_MODE_FIT,
+    startHandler = function(castData)
+        local x, y = castData.target.x, castData.target.y
+
+        local altar = AddSpecialEffect("Doodads\\Outland\\Props\\Altar\\Altar.mdl", x, y)
+        BlzSetSpecialEffectScale(altar, 1.5 )
+
+        local circleRune = AddSpecialEffect("Doodads\\BlackCitadel\\Props\\RuneArt\\RuneArt1.mdl", x, y)
+        BlzSetSpecialEffectScale(circleRune, 2)
+
+        local smallRunes = {}
+        for i = 1, 16 do
+            local newX, newY = WC3Math.polarProjection(x, y, 300, i * (360 / 12))
+            local smallRuneFx = AddSpecialEffect("Doodads\\BlackCitadel\\Props\\RuneArt\\RuneArt" .. math.random(3, 6) .. ".mdl", newX, newY)
+            BlzSetSpecialEffectYaw(smallRuneFx, math.rad(i * (360 / 12)))
+            table.insert(smallRunes, smallRuneFx)
+        end
+
+        castData.altarFx = altar
+        castData.circleFx = circleRune
+        castData.smallRunes = smallRunes
+    end,
+    endHandler = function(castData)
+        SilentDestroyEffect(castData.altarFx)
+        SilentDestroyEffect(castData.circleFx)
+        for _, runeFx in pairs(castData.smallRunes) do
+            SilentDestroyEffect(runeFx)
+        end
+    end
+}
+
 
 Timer.register(function()
     for key, data in pairs(bloodPlagueData) do

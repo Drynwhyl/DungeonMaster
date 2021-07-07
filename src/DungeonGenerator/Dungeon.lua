@@ -522,11 +522,18 @@ function Dungeon:createCreeps()
     local roomCells = {}
     for x = 1, self:getWidth() do
         for y = 1, self:getHeight() do
-            local tile = self:getCell(x, y)
-            if tile == TILE_HALLWAY then
+            if self:getCell(x, y) == TILE_HALLWAY then
                 table.insert(hallwayCells, { x = x, y = y })
-            elseif tile == TILE_FLOOR then
-                table.insert(roomCells, { x = x, y = y })
+            end
+        end
+    end
+
+    for _, room in pairs(self.rooms) do
+        for x = room.x, room.x + room.width do
+            for y = room.y, room.y + room.width do
+                if self:getCell(x, y) == TILE_FLOOR then
+                    table.insert(roomCells, { x = x, y = y })
+                end
             end
         end
     end

@@ -35,9 +35,9 @@ TriggerAddAction(trigger, Utils.pcall(function()
             timeScale = abilities[abilityId].animationTime / castTime
             SetUnitTimeScale(caster, timeScale)
         end
-        if type(abilities[abilityId].animation) == string then
+        if type(abilities[abilityId].animation) == "string" then
             SetUnitAnimation(caster, abilities[abilityId].animation)
-        else
+        elseif type(abilities[abilityId].animation) == "number" then
             SetUnitAnimationByIndex(caster, abilities[abilityId].animation)
         end
         castData[abilityId][caster] = {
@@ -49,22 +49,28 @@ TriggerAddAction(trigger, Utils.pcall(function()
         }
         abilities[abilityId].startHandler(castData[abilityId][caster])
         TimerStart(castData[abilityId][caster].timer, abilities[abilityId].animationDamagePoint / timeScale, false, function()
-            Utils.pcall(function() abilities[abilityId].finishHandler(castData[abilityId][caster]) end)()
+            Utils.pcall(function()
+                abilities[abilityId].finishHandler(castData[abilityId][caster])
+            end)()
         end)
     elseif event == EVENT_PLAYER_UNIT_SPELL_FINISH then
 
     elseif event == EVENT_PLAYER_UNIT_SPELL_ENDCAST then
+        abilities[abilityId].endHandler(castData[abilityId][caster])
         DestroyTimer(castData[abilityId][caster].timer)
         SetUnitTimeScale(caster, 1.0)
     end
 end))
 
-
 ---@param abilityData AbilityData
 function CastSystem.registerAbility(abilityData)
     abilities[abilityData.abilityId] = abilityData
-    abilities[abilityData.abilityId].startHandler = abilities[abilityData.abilityId].startHandler or DoNothing
-    abilities[abilityData.abilityId].finishHandler = abilities[abilityData.abilityId].finishHandler or DoNothing
+    abilityData.startHandler = abilityData.startHandler or DoNothing
+    abilityData.finishHandler = abilityData.finishHandler or DoNothing
+    abilityData.endHandler = abilityData.endHandler or DoNothing
+    abilityData.animationTime = abilityData.animationTime or 0.0
+    abilityData.animationDamagePoint = abilityData.animationDamagePoint or 0.0
+    abilityData.animationBackswingPoint = abilityData.animationBackswingPoint or 0.0
     castData[abilityData.abilityId] = {}
 end
 
@@ -72,7 +78,7 @@ function CastSystem.castAbility(player, abilityId, order, target)
     local dummy = CreateUnit(player, FourCC("n!!!"), GetWidgetX(target), GetWidgetY(target), 0)
     UnitAddAbility(dummy, abilityId)
     IssueTargetOrderById(dummy, order, target)
-    --RemoveUnit(dummy)
+    RemoveUnit(dummy)
 end
 
 return CastSystem
