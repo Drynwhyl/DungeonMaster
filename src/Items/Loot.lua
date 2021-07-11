@@ -165,27 +165,36 @@ Utils.onGameStart(Utils.pcall(function()
     tooltip = BlzCreateFrame("BoxedText", BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0), 0, 0)--Create the BoxedText Frame
     --faceHover would be unneeded if face would support events/tooltip
 
-    BlzFrameSetAbsPoint(tooltip, FRAMEPOINT_RIGHT, 0.825, 0.2)
-    BlzFrameSetSize(tooltip, 0.31, 0.08)
+    BlzFrameSetAbsPoint(tooltip, FRAMEPOINT_BOTTOMRIGHT, 0.825, 0.16)
+    BlzFrameSetSize(tooltip, 0.315, 0.09)
 
     BlzFrameSetText(BlzGetFrameByName("BoxedTextValue", 0), "Human Paladin Face, but it is not uther.")--BoxedText has a child showing the text, set that childs Text.
     BlzFrameSetText(BlzGetFrameByName("BoxedTextTitle", 0), "Paladin")--BoxedText has a child showing the Title-text, set that childs
 end))
 
+local function repeats(s,c)
+    local _,n = s:gsub(c,"")
+    return n
+end
+
 function HoversCommandButton(commandButtonindex)
     if not commandButtonindex then
-        print("Now points at nothing")
+        --print("Now points at nothing")
         BlzFrameSetVisible(tooltip, false)
         --BlzFrameSetVisible(BlzGetOriginFrame(ORIGIN_FRAME_UBERTOOLTIP, 0), true)
     else
-        print("Now points at Button:", commandButtonindex)
+        --print("Now points at Button:", commandButtonindex)
         GroupEnumUnitsSelected(bj_lastCreatedGroup, Player(0), nil)
         local unit = FirstOfGroup(bj_lastCreatedGroup)
         local item = UnitItemInSlot(unit, commandButtonindex)
         if item ~= nil then
             --BlzFrameSetVisible(BlzGetOriginFrame(ORIGIN_FRAME_UBERTOOLTIP, 0), false)
+            local desc = BlzGetItemExtendedTooltip(item)
+            local leng = repeats(desc, "\n")
             BlzFrameSetVisible(tooltip, true)
-            BlzFrameSetText(BlzGetFrameByName("BoxedTextValue", 0), BlzGetItemDescription(item))--BoxedText has a child showing the text, set that childs Text.
+            print("leng", leng)
+            BlzFrameSetSize(tooltip, 0.315, 0.0120 * leng)
+            BlzFrameSetText(BlzGetFrameByName("BoxedTextValue", 0), desc)--BoxedText has a child showing the text, set that childs Text.
             BlzFrameSetText(BlzGetFrameByName("BoxedTextTitle", 0), GetItemName(item))--BoxedText has a child showing the Title-text, set that childs
         end
     end

@@ -1,0 +1,11 @@
+[Misc]
+CanDeactivateMetamorphosis=1
+CreepCampPathingCellDistance=1
+DamageBonusHero=1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00
+DamageBonusMagic=1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00
+DefenseArmor=0.01
+InvisSpeed=0.01
+ItemStackingEnabled=1
+MaxHeroLevel=100
+MaxUnitLevel=100
+

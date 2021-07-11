@@ -1,0 +1,311 @@
+﻿STRING 1
+{
+Dungeon Master
+}
+
+STRING 2
+{
+1-5
+}
+
+STRING 3
+{
+Nondescript
+}
+
+STRING 4
+{
+Drynwhyl
+}
+
+STRING 5
+{
+Player 1
+}
+
+STRING 6
+{
+Force 1
+}
+
+STRING 35
+// Units: H000 (Серафим), Name (Name)
+{
+Серафим
+}
+
+STRING 36
+// Units: n    (Hero Picker), Name (Name)
+{
+Hero Picker
+}
+
+STRING 37
+// Units: H000 (Серафим), Tip (Tooltip - Basic)
+{
+Серафим
+}
+
+STRING 38
+// Abilities: AIbk (Скачок), Hotkey (Hotkey - Normal)
+{
+B
+}
+
+STRING 39
+{
+Player 2
+}
+
+STRING 41
+// Units: H001 (Vampire), Name (Name)
+{
+Vampire
+}
+
+STRING 42
+// Abilities: A002 (Transfusion), Name (Name)
+{
+Transfusion
+}
+
+STRING 48
+// Abilities: A000 (Vampire form), Researchtip (Tooltip - Learn)
+{
+Vampire form
+}
+
+STRING 49
+// Abilities: A000 (Vampire form), Researchubertip (Tooltip - Learn - Extended)
+{
+Transforms into true vampire form, swapping intelligence and strength and gaining lifesteal on attacks.
+}
+
+STRING 50
+// Units: H    (Vampire), Name (Name)
+{
+Vampire
+}
+
+STRING 52
+// Abilities: A001 (Lifesteal), Name (Name)
+{
+Lifesteal
+}
+
+STRING 54
+// Units: H    (Vampire), EditorSuffix (Name - Editor Suffix)
+{
+(True form)
+}
+
+STRING 55
+// Abilities: A000 (Vampire form), Name (Name)
+{
+Vampire form
+}
+
+STRING 56
+// Abilities: A000 (Vampire form), Tip (Tooltip - Normal)
+{
+Vampire form
+}
+
+STRING 57
+// Abilities: A000 (Vampire form), Ubertip (Tooltip - Normal - Extended)
+{
+Transforms into true vampire form, swapping intelligence and strength and gaining lifesteal on attacks.
+}
+
+STRING 58
+// Abilities: A000 (Vampire form), Untip (Tooltip - Turn Off)
+{
+Vampire form
+}
+
+STRING 59
+// Abilities: A000 (Vampire form), Unubertip (Tooltip - Turn Off - Extended)
+{
+Transforms back to human form
+}
+
+STRING 61
+// Abilities: A002 (Transfusion), Researchhotkey (Hotkey - Learn)
+{
+Q
+}
+
+STRING 62
+// Abilities: A002 (Transfusion), Hotkey (Hotkey - Normal)
+{
+Q
+}
+
+STRING 63
+// Abilities: A003 (Tides of blood), Name (Name)
+{
+Tides of blood
+}
+
+STRING 64
+// Abilities: A003 (Tides of blood), Researchhotkey (Hotkey - Learn)
+{
+W
+}
+
+STRING 65
+// Abilities: A003 (Tides of blood), Hotkey (Hotkey - Normal)
+{
+W
+}
+
+STRING 66
+// Abilities: A004 (Blood plague), Name (Name)
+{
+Blood plague
+}
+
+STRING 69
+// Abilities: A007 (Blood Plague), Name (Name)
+{
+Blood Plague
+}
+
+STRING 70
+// Abilities: A004 (Blood plague), Researchhotkey (Hotkey - Learn)
+{
+E
+}
+
+STRING 71
+// Abilities: A004 (Blood plague), Hotkey (Hotkey - Normal)
+{
+E
+}
+
+STRING 73
+// Abilities: A007 (Blood Plague), EditorSuffix (Editor Suffix)
+{
+(Debuff)
+}
+
+STRING 74
+// Buffs/Effects: B000 (), Bufftip (Tooltip)
+{
+Blood Plague
+}
+
+STRING 75
+// Units: n!!! (Dummy Caster), Name (Name)
+{
+Dummy Caster
+}
+
+STRING 76
+// Abilities: A005 (Blood Ministry), Name (Name)
+{
+Blood Ministry
+}
+
+STRING 77
+// Abilities: A005 (Blood Ministry), Researchhotkey (Hotkey - Learn)
+{
+E
+}
+
+STRING 78
+// Abilities: A005 (Blood Ministry), Hotkey (Hotkey - Normal)
+{
+E
+}
+
+STRING 79
+// Abilities: A""" (Lifesteal), Name (Name)
+{
+Lifesteal
+}
+
+STRING 81
+// Abilities: Ast0 (Stat: attributes), Name (Name)
+{
+Stat: attributes
+}
+
+STRING 84
+// Abilities: Ast1 (Stat: attack damage), Name (Name)
+{
+Stat: attack damage
+}
+
+STRING 85
+// Abilities: Ast2 (Stat: attack speed), Name (Name)
+{
+Stat: attack speed
+}
+
+STRING 86
+// Abilities: Ast3 (Stat: move speed), Name (Name)
+{
+Stat: move speed
+}
+
+STRING 87
+// Abilities: Ast4 (Stat: life), Name (Name)
+{
+Stat: life
+}
+
+STRING 88
+// Abilities: Ast5 (Stat: mana), Name (Name)
+{
+Stat: mana
+}
+
+STRING 89
+// Abilities: Ast6 (Stat: life regen), Name (Name)
+{
+Stat: life regen
+}
+
+STRING 90
+// Abilities: Ast7 (Stat: mana regen), Name (Name)
+{
+Stat: mana regen
+}
+
+STRING 91
+// Abilities: Ast8 (Stat: lifesteal), Name (Name)
+{
+Stat: lifesteal
+}
+
+STRING 92
+// Abilities: Ast9 (Stat: crit, dodge), Name (Name)
+{
+Stat: crit, dodge
+}
+
+STRING 94
+// Units: H    (Vampire), Propernames (Proper Names)
+{
+Элдин Солнечный Скиталец,Танин Ястребиное Крыло,Лорн Кровожадный,Олдос Огненная Звезда,Гиларас Драконорожденный,Хейл Волшебный Огонь,Кат'ранис Ремар,Тиорил Ловчий Солнца,Сильвос Ветрокрылый,Тенрис Мутная Кровь,Мараканис Ярость Звезд,Гелдор Земное Пламя,Галендор Пламерожденный,Келен Разрушитель
+}
+
+STRING 95
+// Units: n  ! (Dummy Item), Name (Name)
+{
+Dummy Item
+}
+
+STRING 97
+// Items: k3m3 (Ключ Трех Лун), Ubertip (Tooltip - Extended)
+{
+|cff808080Damage: 28-39            Attack speed: -120%|r
+
++25% crit chance
++50 fire damage
++10% dodge
+ 
+|cff00ff00Ability: 5% chance on attack to cast wave of fire that deals fire damage and ignites enemies for 5 seconds.|r
+}
+
