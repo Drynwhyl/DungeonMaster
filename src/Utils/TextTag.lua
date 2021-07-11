@@ -40,12 +40,12 @@ function TextTag.XY(x, y, text, red, green, blue, show)
     SetTextTagText(tt, text, FONT_SIZE)
     SetTextTagColor(tt, red, green, blue, 255)
     SetTextTagPos(tt, x - shift, y, DEFAULT_HEIGHT)
-    SetTextTagVelocity(tt, 0.0, 0.04)
+    SetTextTagVelocity(tt, 0.0, 0.0)
     SetTextTagVisibility(tt, show ~= false)
     SetTextTagFadepoint(tt, 2.5)
-    SetTextTagLifespan(tt, 4.0)
-    SetTextTagPermanent(tt, false)
-    tt = nil
+    --SetTextTagLifespan(tt, 4.0)
+    SetTextTagPermanent(tt, true)
+    return tt
 end
 -- ===========================================================================
 --    Custom centered texttag above unit

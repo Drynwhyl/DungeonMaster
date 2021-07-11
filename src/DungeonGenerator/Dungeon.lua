@@ -1,4 +1,5 @@
 require "TerrainTypeCodes"
+require "RandomLua"
 
 local Autotable = require "Autotable"
 local Room = require "Room"
@@ -18,6 +19,9 @@ local PATH_BLOCK_ID = FourCC("Ytlc")
 local WALLS = CliffDestructables.cityCliffs
 WALLS["cccc"] = { id = FourCC("ZTtw"), variations = 1 }
 WALLS["aaaa"] = { id = FourCC("OTtw"), variations = 1 }
+
+---@type linear_congruential_generator
+local randomGenerator = lcg(0)
 
 local TILES_ORDER = {
     --TILE_WALL,
@@ -89,7 +93,7 @@ function Dungeon:new(rect, level, seed, roomTemplates, startRoomTemplates, bossR
 end
 
 function Dungeon:generate()
-    math.randomseed(self.seed)
+    randomGenerator:randomseed(self.seed)
     self:placeRooms()
     self:connectRooms()
     Utils.pcall(function()
@@ -146,7 +150,7 @@ function Dungeon:placeDestructable(x, y, z, tile, destructables, globalOffsetX, 
     }
 
     variationFunc = variationFunc or function(object)
-        return math.random(0, object.variations - 1)
+        return randomGenerator:random(0, object.variations - 1)
     end
 
     -- Check left
@@ -229,7 +233,7 @@ local function getCliffVariation(cliffData)
     if cliffData.name == "acac" or cliffData.name == "caca" then
         return 2
     end
-    return math.random(0, cliffData.variations - 1)
+    return randomGenerator:random(0, cliffData.variations - 1)
 end
 
 function Dungeon:createWalls(visitedCells)
@@ -408,7 +412,7 @@ end
 function Dungeon:connectRooms()
     local nodes = Node:createGraph(self, MIN_HALLWAY_WIDTH)
     local startBossFound = self:findPath(nodes, self.startRoom.doors[1], self.bossRoom.doors[1])
-    local startLeverFound = self:findPath(nodes, self.startRoom.doors[1], self.leverRoom.doors[math.random(1, #self.leverRoom.doors)])
+    local startLeverFound = self:findPath(nodes, self.startRoom.doors[1], self.leverRoom.doors[randomGenerator:random(1, #self.leverRoom.doors)])
 
     if not startBossFound then
         print("ERROR! Start to boss path not found!")
@@ -429,8 +433,8 @@ function Dungeon:connectRooms()
     for _, room in pairs(allRooms) do
         for _, otherRoom in pairs(allRooms) do
             if room ~= otherRoom and connectedRooms[room] ~= otherRoom and connectedRooms[otherRoom] ~= room then
-                local startIndex = math.random(1, #room.doors);
-                local finishIndex = math.random(1, #otherRoom.doors)
+                local startIndex = randomGenerator:random(1, #room.doors);
+                local finishIndex = randomGenerator:random(1, #otherRoom.doors)
                 local startDoor = room.doors[startIndex]
                 local finishDoor = otherRoom.doors[finishIndex]
 
@@ -440,7 +444,7 @@ function Dungeon:connectRooms()
                     otherRoom.doors[finishIndex].visited = true
                     connectedRooms[room] = otherRoom
                     connectedRooms[otherRoom] = room
-                    if math.random(1, 2) == 1 then
+                    if randomGenerator:random(1, 2) == 1 then
                         --break
                     end
                 end
@@ -494,11 +498,12 @@ end
 function Dungeon:placeCreeps(unitID, amountPerCell, cells)
     local amount = math.floor(#cells * amountPerCell)
     for _ = 1, amount do
-        local index = math.random(1, #cells)
+        local index = randomGenerator:random(1, #cells)
         local cell = cells[index]
         local x, y = self:toMapCoords(cell.x, cell.y)
         table.remove(cells, index)
-        local unit = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), unitID, x, y, math.random(0, 360))
+        local unit = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), unitID, x, y, randomGenerator:random(0, 360))
+        BlzSetUnitName(unit, "|cff00ff00Some cool name|r")
         --SetUnitAcquireRange(unit, 100)
         scaleCreep(unit, self.level)
         --TriggerRegisterUnitEvent(nil, unit, EVENT_UNIT_ACQUIRED_TARGET)
@@ -701,11 +706,11 @@ end
 function Dungeon:placeRandomRoom(templates, attempts)
     attempts = attempts or 100000
     for _ = 1, attempts do
-        local index = math.random(1, #templates)
-        local angle = math.random(0, 3) * 90
+        local index = randomGenerator:random(1, #templates)
+        local angle = randomGenerator:random(0, 3) * 90
         local template = templates[index]:rotate(angle)
-        local x = math.random(1, self:getWidth() - template:getWidth())
-        local y = math.random(1, self:getHeight() - template:getHeight())
+        local x = randomGenerator:random(1, self:getWidth() - template:getWidth())
+        local y = randomGenerator:random(1, self:getHeight() - template:getHeight())
         local room = self:placeRoomForReal(x, y, template)
         if room then
             return room

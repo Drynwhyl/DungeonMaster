@@ -100,6 +100,7 @@ function twister(s)
 end
 
 --Linear Congruential Generator
+---@class linear_congruential_generator
 linear_congruential_generator = {}
 linear_congruential_generator.__index = linear_congruential_generator
 
