@@ -49,33 +49,33 @@
         end))
     end)
 
-    Utils.onGameStart(Utils.pcall(function()
-        local TextTag = require("TextTag")
-        local tt = TextTag.XY(0, 0, "Test", 255, 255, 255, true)
-
-
-        local t = CreateTrigger()
-        TriggerRegisterPlayerEvent(t, Player(0), EVENT_PLAYER_MOUSE_MOVE)
-        TriggerAddAction(t, Utils.pcall(function()
-            local mouseX, mouseY = BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY()
-            local mousePos = BlzGetTriggerPlayerMousePosition()
-            local rect = RectFromCenterSizeBJ(mousePos, 128, 128)
-            local dist = 999
-            local item
-            EnumItemsInRect(rect, nil, function()
-                local enumItem = GetEnumItem()
-                local newDist = DistanceBetweenPoints(GetItemLoc(enumItem), mousePos)
-                if newDist >= dist then
-                    return
-                end
-                item = enumItem
-                dist = newDist
-            end)
-            if item ~= nil then
-                SetTextTagPos(tt, GetItemX(item), GetItemY(item), 32.0)
-                SetTextTagText(tt, GetItemName(item), 0.024)
-            end
-        end))
-    end))
+    --Utils.onGameStart(Utils.pcall(function()
+    --    local TextTag = require("TextTag")
+    --    local tt = TextTag.XY(0, 0, "Test", 255, 255, 255, true)
+    --
+    --
+    --    local t = CreateTrigger()
+    --    TriggerRegisterPlayerEvent(t, Player(0), EVENT_PLAYER_MOUSE_MOVE)
+    --    TriggerAddAction(t, Utils.pcall(function()
+    --        local mouseX, mouseY = BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY()
+    --        local mousePos = BlzGetTriggerPlayerMousePosition()
+    --        local rect = RectFromCenterSizeBJ(mousePos, 128, 128)
+    --        local dist = 999
+    --        local item
+    --        EnumItemsInRect(rect, nil, function()
+    --            local enumItem = GetEnumItem()
+    --            local newDist = DistanceBetweenPoints(GetItemLoc(enumItem), mousePos)
+    --            if newDist >= dist then
+    --                return
+    --            end
+    --            item = enumItem
+    --            dist = newDist
+    --        end)
+    --        if item ~= nil then
+    --            SetTextTagPos(tt, GetItemX(item), GetItemY(item), 32.0)
+    --            SetTextTagText(tt, GetItemName(item), 0.024)
+    --        end
+    --    end))
+    --end))
 
 

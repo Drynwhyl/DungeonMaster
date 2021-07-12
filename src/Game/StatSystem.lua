@@ -11,34 +11,11 @@ local ABILITY_MANA_REGEN = FourCC("Ast7")
 local ABILITY_LIFESTEAL = FourCC("Ast8")
 local ABILITY_CRITSTRIKE_DODGE = FourCC("Ast9")
 
---local STAT = {
---    STRENGTH = 1,
---    AGILITY = 2,
---    INTELLIGENCE = 3,
---    DAMAGE = 4,
---    ATTACK_SPEED = 5,
---    MOVE_SPEED = 6,
---    LIFE = 7,
---    MANA = 8,
---    LIFE_REGEN = 9,
---    MANA_REGEN = 10,
---    LIFESTEAL = 11,
---    CRIT_CHANCE = 12,
---    CRIT_DAMAGE = 13,
---    DODGE_CHANCE = 14,
---}
-
---STAT_MODE = {
---    BASE = 1,
---    BONUS = 2,
---    ALL = 3,
---}
-
 STAT_NAME = {
     STRENGTH = "STRENGTH",
     AGILITY = "AGILITY",
     INTELLIGENCE = "INTELLIGENCE",
-    DAMAGE = "DAMAGE",
+    ATTACK_DAMAGE = "ATTACK_DAMAGE",
     ATTACK_SPEED = "ATTACK_SPEED",
     MOVE_SPEED = "MOVE_SPEED",
     LIFE = "LIFE",

@@ -47,7 +47,7 @@ local ItemTypes = compiletime(function()
         {
             fields = {
                 Art = "ReplaceableTextures/CommandButtons/BTNSteelMelee.blp",
-                Name = "",
+                Name = "Broad sword",
             },
             data = {
                 stats = {

@@ -73,7 +73,7 @@ function CreateNeutralPassiveBuildings()
     SetUnitColor(u, ConvertPlayerColor(12))
     u = BlzCreateUnitWithSkin(p, FourCC("nmrk"), -7040.0, 5504.0, 270.000, FourCC("nmrk"))
     SetUnitColor(u, ConvertPlayerColor(0))
-    u = BlzCreateUnitWithSkin(p, FourCC("n  !"), -6101.1, 6408.9, 270.000, FourCC("n  !"))
+    u = BlzCreateUnitWithSkin(p, FourCC("n  !"), -6421.1, 6344.9, 270.000, FourCC("n  !"))
 end
 
 function CreatePlayerBuildings()

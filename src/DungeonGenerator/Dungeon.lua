@@ -475,7 +475,7 @@ local function scaleCreep(creep, level)
     local SCALING_PER_LEVEL = 1.05
     local scalingExp = SCALING_PER_LEVEL ^ level - 1
     local scalingLevel = (level - 1) * 0.5
-    print("scale unit to level", level, "scaling", scalingExp)
+    --print("scale unit to level", level, "scaling", scalingExp)
 
     local function scaleStat(base)
         return math.floor(base + base * scalingLevel + base * scalingExp)

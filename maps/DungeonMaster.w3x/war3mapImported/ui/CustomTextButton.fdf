@@ -57,4 +57,16 @@ Frame "BACKDROP" "BoxedText" INHERITS "BoxedTextBackgroundTemplate" {
         SetPoint TOPLEFT, "BoxedText", TOPLEFT, 0.005, -0.02,
         BackdropBackground  "UI\Widgets\ToolTips\Human\ToolTipGoldIcon.blp",
     }
+
+       Frame "TEXT" "BoxedTextGoldValue" {
+           UseActiveContext,
+           DecorateFileNames,
+           SetPoint TOPLEFT, "BoxedText", TOPLEFT, 0.02, -0.02,
+           SetPoint BOTTOMRIGHT,  "BoxedText", BOTTOMRIGHT, -0.005, 0.025,
+           FontFlags "FIXEDSIZE",
+           FrameFont "MasterFont", 0.011, "",
+           FontColor 1.0 0.8 0.0 1.0,
+           FontShadowColor 0.0 0.0 0.0 0.9,
+           FontShadowOffset 0.001 -0.001,
+       }
 }
