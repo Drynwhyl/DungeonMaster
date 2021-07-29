@@ -2,7 +2,6 @@ require "StatSystem"
 require "OrderSystem"
 local ItemTypes = require "ItemTypes"
 local Utils = require "Utils"
-local TextUtils = require "TextUtils"
 local WC3Math = require "WC3Math"
 
 local UNIT_ID_DUMMY_ITEM = FourCC("n  !")
@@ -13,78 +12,6 @@ local ITEM_QUALITY = {
     UNCOMMON = { name = "UNCOMMON", color = 0xff40ff40 },
     RARE = { name = "RARE", color = 0xff3895ff },
     EPIC = { name = "EPIC", color = 0xffa335ee },
-}
-
-local STAT_TOOLTIP_NAMES = {
-    [STAT_NAME.STRENGTH] = "Strength",
-    [STAT_NAME.AGILITY] = "Agility",
-    [STAT_NAME.INTELLIGENCE] = "Intelligence",
-    [STAT_NAME.ATTACK_DAMAGE] = "Damage",
-    [STAT_NAME.ATTACK_SPEED] = "Attack speed",
-    [STAT_NAME.MOVE_SPEED] = "Attack speed",
-    [STAT_NAME.MOVE_SPEED] = "Attack speed",
-    [STAT_NAME.LIFE] = "Life",
-    [STAT_NAME.MANA] = "Mana",
-    [STAT_NAME.LIFE_REGEN] = "Life regen",
-    [STAT_NAME.MANA_REGEN] = "Mana regen",
-    [STAT_NAME.LIFESTEAL] = "Lifesteal",
-    [STAT_NAME.CRIT_CHANCE] = "Crit. chance",
-    [STAT_NAME.CRIT_DAMAGE] = "Crit. damage",
-    [STAT_NAME.DODGE_CHANCE] = "Dodge chance",
-}
-
-ITEM_CLASS_NAMES = {
-    [ITEM_CLASS.MELEE_WEAPON] = "Melee weapon",
-    [ITEM_CLASS.RANGED_WEAPON] = "Melee weapon",
-    [ITEM_CLASS.MAGIC_WEAPON] = "Melee weapon",
-    [ITEM_CLASS.OFFHAND] = "Melee weapon",
-    [ITEM_CLASS.ARMOR] = "Melee weapon",
-    [ITEM_CLASS.SPECIAL_ITEM] = "Special item",
-    [ITEM_CLASS.RING] = "Ring",
-}
-
-ITEM_SUBCLASS_NAMES = {
-    [ITEM_SUBCLASS.MELEE_WEAPON_AXE] = "Axe",
-    [ITEM_SUBCLASS.MELEE_WEAPON_SWORD] = "Sword",
-    [ITEM_SUBCLASS.MELEE_WEAPON_DAGGER] = "Dagger",
-    [ITEM_SUBCLASS.RANGED_WEAPON_CROSSBOW] = "Crossbow",
-    [ITEM_SUBCLASS.RANGED_WEAPON_BOW] = "Bow",
-    [ITEM_SUBCLASS.MAGIC_WEAPON_STAFF] = "Staff",
-    [ITEM_SUBCLASS.ARMOR_LIGHT] = "Light",
-    [ITEM_SUBCLASS.ARMOR_MEDIUM] = "Medium",
-    [ITEM_SUBCLASS.ARMOR_HEAVY] = "Heavy",
-    [ITEM_SUBCLASS.OFFHAND_SHIELD] = "Shield",
-    [ITEM_SUBCLASS.OFFHAND_TOME] = "Tome",
-    [ITEM_SUBCLASS.OFFHAND_SPHERE] = "Sphere",
-    [ITEM_SUBCLASS.SPECIAL_ITEM_HELM] = "Helmet",
-    [ITEM_SUBCLASS.SPECIAL_ITEM_CAPE] = "Cape",
-    [ITEM_SUBCLASS.SPECIAL_ITEM_TALISMAN] = "Talisman",
-    [ITEM_SUBCLASS.RING] = "",
-}
-
----@class ItemStat
----@field name string
----@field type string
----@field value any
-local ItemStat = {}
-
----@class
----@field name string
----@field desc string
----@field stats table<string,ItemStat>
-local ItemData = {}
-
-function ItemData:new()
-    local instance = {
-        stats = {}
-    }
-    setmetatable(instance, self)
-    self.__index = self
-    return instance
-end
-
-local itemData = {
-    stats = {}
 }
 
 local function GetDropItemsCount()
@@ -119,55 +46,11 @@ local function ChooseItemQuality()
     return ITEM_QUALITY[qualityName[RandomDistChoose()]]
 end
 
---local function CountItemsInTable(tab)
---    local count = 0
---    for _ in pairs(tab) do
---        count = count + 1
---    end
---    return count
---end
-
 local function ChooseItemType(class)
     local classItemNumber = #ItemTypes[class]
     local randomTypeIndex = math.random(1, classItemNumber)
     return ItemTypes[class][randomTypeIndex]
 end
-
-local function CreateDescription(item)
-    local data = itemData[item]
-    local desc = ""
-    for statName, statData in pairs(data.stats) do
-        desc = desc .. STAT_TOOLTIP_NAMES[statName] .. ": " .. statData.value .. "\n"
-        --desc = string.format("%s%s: %+d")
-    end
-    return desc
-end
-
-local function ApplyQuality(unit, item, quality)
-    local name = TextUtils.colorText(GetItemName(item), quality.color)
-    local a, r, g, b = TextUtils.intToARGB(quality.color)
-    SetUnitVertexColor(unit, r, g, b, a)
-    BlzSetUnitName(unit, name)
-    itemData[item].name = name
-    itemData[item].desc = CreateDescription(item)
-end
-
-local function InitItemStats(item, itemType, level)
-    BlzSetItemIntegerField(item, ITEM_IF_LEVEL, level)
-    itemData[item] = ItemData:new()
-    itemData[item].type = itemType
-    itemData[item].stats = {}
-    for statName, statData in pairs(itemType.data.stats) do
-        itemData[item].stats[statName] = { type = statData.type, value = statData.value }
-    end
-end
-
-local function GetItemStats(item)
-    return itemData[item].stats
-end
-
-local dummyUnitItems = {}
-local itemDummyUnits = {}
 
 local createLootTrigger = CreateTrigger()
 TriggerRegisterPlayerUnitEvent(createLootTrigger, Player(PLAYER_NEUTRAL_AGGRESSIVE), EVENT_PLAYER_UNIT_DEATH)
@@ -177,33 +60,12 @@ TriggerAddAction(createLootTrigger, Utils.pcall(function()
         return
     end
     local unit = GetDyingUnit()
-    for i = 1, itemCount do
+    for _ = 1, itemCount do
         local itemClass = ChooseItemClass()
         local itemType = ChooseItemType(itemClass)
-        local level = GetUnitLevel(unit)
-        local item = CreateItem(itemType.id, GetUnitX(unit), GetUnitY(unit))
-        local dummyUnit = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), UNIT_ID_DUMMY_ITEM, GetUnitX(unit), GetUnitY(unit), bj_UNIT_FACING)
-        dummyUnitItems[dummyUnit] = item
-        itemDummyUnits[item] = dummyUnit
-        local trigger = CreateTrigger()
-        TriggerRegisterUnitInRange(trigger, dummyUnit, 128, nil)
-        TriggerAddAction(trigger, function()
-            local unitInRange = GetTriggerUnit()
-            if  IsUnitType(unitInRange, UNIT_TYPE_HERO)
-            and GetUnitCurrentOrder(unitInRange) == ORDER_smart
-            and GetUnitCurrentOrderTarget(unitInRange) == dummyUnit then
-                local item = dummyUnitItems[dummyUnit]
-                SetItemVisible(item, true)
-                UnitAddItem(unitInRange, item)
-                IssueImmediateOrderById(unitInRange, ORDER_stop)
-                ShowUnit(dummyUnit, false)
-            end
-        end)
-
-        InitItemStats(item, itemType, level)
         local quality = ChooseItemQuality()
-        ApplyQuality(dummyUnit, item, quality)
-        SetItemVisible(item, false)
+        local level = GetUnitLevel(unit)
+        Equipment:new(itemType, quality, level, GetUnitX(unit), GetUnitY(unit))
     end
 end))
 
@@ -216,10 +78,10 @@ TriggerAddAction(pickupTrigger, function()
     and GetUnitTypeId(dummyUnit) == UNIT_ID_DUMMY_ITEM
     and IsUnitInRange(unit, dummyUnit, 128) then
         -- Force unit to stop from moving directly into item, but since trigger events fires earlier than actual order is issued
-        -- to unit we can't use "stop" order, "move" order puts it in queue and that will fire after current order
+        -- to unit we can't use "stop" order. "move" order puts it in queue and that will fire after current order
         -- Use polarProjection with small offset to prevent unit from turning around if we use his own position to move
         IssuePointOrderById(unit, ORDER_move, WC3Math.polarProjection(GetUnitX(unit), GetUnitY(unit), 0.01, GetUnitFacing(unit)))
-        local item = dummyUnitItems[dummyUnit]
+        local item = Equipment:getByHandle(dummyUnit).item
         SetItemVisible(item, true)
         UnitAddItem(unit, item)
         ShowUnit(dummyUnit, false)
@@ -236,17 +98,12 @@ TriggerAddAction(equipTrigger, Utils.pcall(function()
     local thisTrigger = GetTriggeringTrigger()
 
     if event == EVENT_PLAYER_UNIT_PICKUP_ITEM then
-        for statName, statData in pairs(GetItemStats(item)) do
+        for statName, statData in pairs(Equipment:getByHandle(item).stats) do
             SetUnitStat(unit, statName, statData.type, GetUnitStat(unit, statName, statData.type) + statData.value)
         end
     elseif event == EVENT_PLAYER_UNIT_DROP_ITEM then
-        if GetUnitCurrentOrder(unit) == ORDER_dropitem then
-            print("drop item order! ok!")
-        else
-            print("sadly, order is:", OrderId2String(GetUnitCurrentOrder(unit)))
-        end
         Utils.doAfter(0, function()
-            local dummyUnit = itemDummyUnits[item]
+            local dummyUnit = Equipment.map[item].unit
             local x, y = GetItemX(item), GetItemY(item)
             SetUnitPosition(dummyUnit, x, y)
             ShowUnit(dummyUnit, true)
@@ -255,10 +112,10 @@ TriggerAddAction(equipTrigger, Utils.pcall(function()
             SetItemPosition(item, x, y)
             SetItemVisible(item, true)
             SetItemVisible(item, false)
-            print("set item invisible", IsItemVisible(item), GetItemName(item))
+            --print("set item invisible", IsItemVisible(item), GetItemName(item))
             EnableTrigger(thisTrigger)
 
-            for statName, statData in pairs(GetItemStats(item)) do
+            for statName, statData in pairs(Equipment:getByHandle(item).stats) do
                 SetUnitStat(unit, statName, statData.type, GetUnitStat(unit, statName, statData.type) - statData.value)
             end
         end)
@@ -331,8 +188,8 @@ function HoversCommandButton(commandButtonindex)
         local item = UnitItemInSlot(unit, commandButtonindex)
         if item ~= nil then
             BlzFrameSetVisible(BlzGetOriginFrame(ORIGIN_FRAME_UBERTOOLTIP, 0), false)
-            local itemName = itemData[item] ~= nil and itemData[item].name or GetItemName(item)
-            local itemDesc = itemData[item] ~= nil and itemData[item].desc or BlzGetItemExtendedTooltip(item)
+            local itemName = Equipment:getByHandle(item) ~= nil and Equipment:getByHandle(item).name or GetItemName(item)
+            local itemDesc = Equipment:getByHandle(item) ~= nil and Equipment:getByHandle(item).desc or BlzGetItemExtendedTooltip(item)
             local descriptionSize = repeats(itemDesc, "\n")
             BlzFrameSetVisible(tooltip, true)
             BlzFrameSetSize(tooltip, 0.315, 0.012 * descriptionSize + 0.05)

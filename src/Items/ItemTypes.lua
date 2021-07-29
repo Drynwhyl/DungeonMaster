@@ -1,3 +1,36 @@
+require "StatSystem"
+local Stat = require "Stat"
+
+local STAT_TYPE = {
+    "BASE",
+    "BONUS",
+    "PERCENT",
+}
+
+---@class ItemStat
+---@field public stat Stat
+---@field public type string
+---@field public amount number
+local ItemStat = {}
+
+---@param stat Stat
+---@param type string
+---@param amount number
+---@return ItemStat
+function ItemStat:new(stat, type, amount)
+    local instance = {
+        stat = stat,
+        type = type,
+        amount = amount
+    }
+
+    setmetatable(instance, self)
+    self.__index = self
+
+    return instance
+end
+
+
 ---@class ItemTypes
 local ItemTypes = compiletime(function()
 
@@ -50,6 +83,7 @@ local ItemTypes = compiletime(function()
                 Name = "Broad sword",
             },
             data = {
+                class = "SWORD",
                 stats = {
                     ["ATTACK_DAMAGE"] = {
                         type = "BONUS",
